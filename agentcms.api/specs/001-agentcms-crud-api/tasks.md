@@ -18,10 +18,10 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create .NET 8 Web API project structure: Controllers/, Models/, Services/, Repositories/, Data/, Storage/, Middleware/ directories in agentcms.api/
-- [ ] T002 Initialize .csproj with Entity Framework Core, SQL Server, Swashbuckle.AspNetCore packages in agentcms.api/agentcms.api.csproj
-- [ ] T003 [P] Configure appsettings.json with ConnectionStrings.DefaultConnection and FileStorage sections in agentcms.api/appsettings.json
-- [ ] T004 [P] Configure Program.cs with Kestrel, service registration, and middleware pipeline in agentcms.api/Program.cs
+- [X] T001 Create .NET 8 Web API project structure: Controllers/, Models/, Services/, Repositories/, Data/, Storage/, Middleware/ directories in agentcms.api/
+- [X] T002 Initialize .csproj with Entity Framework Core, SQL Server, Swashbuckle.AspNetCore packages in agentcms.api/agentcms.api.csproj
+- [X] T003 [P] Configure appsettings.json with ConnectionStrings.DefaultConnection and FileStorage sections in agentcms.api/appsettings.json
+- [X] T004 [P] Configure Program.cs with Kestrel, service registration, and middleware pipeline in agentcms.api/Program.cs
 
 ---
 
@@ -31,18 +31,18 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create AgentCmsContext : DbContext with DbSet<Site>, DbSet<Page>, DbSet<Asset> in agentcms.api/Data/AgentCmsContext.cs
-- [ ] T006 [P] Configure Fluent API for Site entity (primary key, unique name index, max lengths) in agentcms.api/Data/AgentCmsContext.cs
-- [ ] T007 [P] Configure Fluent API for Page entity (foreign key to Site, indexes on SiteId and (SiteId, PublishedDate)) in agentcms.api/Data/AgentCmsContext.cs
-- [ ] T008 [P] Configure Fluent API for Asset entity (foreign key to Site, index on SiteId) in agentcms.api/Data/AgentCmsContext.cs
-- [ ] T009 Create initial EF Core migration 'InitialCreate' using dotnet ef migrations add in agentcms.api/Data/Migrations/
-- [ ] T010 Apply database migration to create AgentCMS database using dotnet ef database update
-- [ ] T011 [P] Create IFileStore interface with SaveAsync, GetStreamAsync, DeleteAsync, ExistsAsync methods in agentcms.api/Storage/IFileStore.cs
-- [ ] T012 [P] Implement LocalFileStore : IFileStore with GUID filename generation and configurable path in agentcms.api/Storage/LocalFileStore.cs
-- [ ] T013 [P] Create RequestLoggingMiddleware with correlation ID (X-Request-ID) in agentcms.api/Middleware/RequestLoggingMiddleware.cs
-- [ ] T014 [P] Create global exception handler middleware with error response format in agentcms.api/Middleware/ExceptionHandlerMiddleware.cs
-- [ ] T015 Configure Swagger UI with OpenAPI specification in agentcms.api/Program.cs
-- [ ] T016 Register IFileStore as scoped service in dependency injection container in agentcms.api/Program.cs
+- [X] T005 Create AgentCmsContext : DbContext with DbSet<Site>, DbSet<Page>, DbSet<Asset> in agentcms.api/Data/AgentCmsContext.cs
+- [X] T006 [P] Configure Fluent API for Site entity (primary key, unique name index, max lengths) in agentcms.api/Data/AgentCmsContext.cs
+- [X] T007 [P] Configure Fluent API for Page entity (foreign key to Site, indexes on SiteId and (SiteId, PublishedDate)) in agentcms.api/Data/AgentCmsContext.cs
+- [X] T008 [P] Configure Fluent API for Asset entity (foreign key to Site, index on SiteId) in agentcms.api/Data/AgentCmsContext.cs
+- [X] T009 Create initial EF Core migration 'InitialCreate' using dotnet ef migrations add in agentcms.api/Data/Migrations/
+- [X] T010 Apply database migration to create AgentCMS database using dotnet ef database update
+- [X] T011 [P] Create IFileStore interface with SaveAsync, GetStreamAsync, DeleteAsync, ExistsAsync methods in agentcms.api/Storage/IFileStore.cs
+- [X] T012 [P] Implement LocalFileStore : IFileStore with GUID filename generation and configurable path in agentcms.api/Storage/LocalFileStore.cs
+- [X] T013 [P] Create RequestLoggingMiddleware with correlation ID (X-Request-ID) in agentcms.api/Middleware/RequestLoggingMiddleware.cs
+- [X] T014 [P] Create global exception handler middleware with error response format in agentcms.api/Middleware/ExceptionHandlerMiddleware.cs
+- [X] T015 Configure Swagger UI with OpenAPI specification in agentcms.api/Program.cs
+- [X] T016 Register IFileStore as scoped service in dependency injection container in agentcms.api/Program.cs
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -56,19 +56,19 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Create Site entity model (Id, Name, Description) with navigation properties in agentcms.api/Models/Entities/Site.cs
-- [ ] T018 [P] [US1] Create SiteDto, CreateSiteDto, UpdateSiteDto with Data Annotations validation in agentcms.api/Models/DTOs/SiteDto.cs
-- [ ] T019 [P] [US1] Create ISiteRepository interface with AddAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync, CountPagesAsync, CountAssetsAsync in agentcms.api/Repositories/ISiteRepository.cs
-- [ ] T020 [US1] Implement SiteRepository with EF Core queries using AsNoTracking for reads in agentcms.api/Repositories/SiteRepository.cs
-- [ ] T021 [P] [US1] Create ISiteService interface with CreateAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync methods in agentcms.api/Services/ISiteService.cs
-- [ ] T022 [US1] Implement SiteService with validation (Name required, unique, max 255), deletion guard (check for pages/assets), and DTO mapping in agentcms.api/Services/SiteService.cs
-- [ ] T023 [US1] Create SitesController with POST, GET, GET (by ID), PUT, DELETE endpoints mapped to /v1/sites in agentcms.api/Controllers/SitesController.cs
-- [ ] T024 [US1] Implement POST /v1/sites endpoint returning 201 with Location header and SiteDto in agentcms.api/Controllers/SitesController.cs
-- [ ] T025 [US1] Implement GET /v1/sites endpoint returning 200 with array of SiteDto in agentcms.api/Controllers/SitesController.cs
-- [ ] T026 [US1] Implement GET /v1/sites/{siteId} endpoint returning 200 or 204 (non-standard not found) in agentcms.api/Controllers/SitesController.cs
-- [ ] T027 [US1] Implement PUT /v1/sites/{siteId} endpoint with validation and 200 or 204 response in agentcms.api/Controllers/SitesController.cs
-- [ ] T028 [US1] Implement DELETE /v1/sites/{siteId} endpoint with deletion guard returning 400 if content exists in agentcms.api/Controllers/SitesController.cs
-- [ ] T029 [US1] Register ISiteRepository and ISiteService in dependency injection container in agentcms.api/Program.cs
+- [X] T017 [P] [US1] Create Site entity model (Id, Name, Description) with navigation properties in agentcms.api/Models/Entities/Site.cs
+- [X] T018 [P] [US1] Create SiteDto, CreateSiteDto, UpdateSiteDto with Data Annotations validation in agentcms.api/Models/DTOs/SiteDto.cs
+- [X] T019 [P] [US1] Create ISiteRepository interface with AddAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync, CountPagesAsync, CountAssetsAsync in agentcms.api/Repositories/ISiteRepository.cs
+- [X] T020 [US1] Implement SiteRepository with EF Core queries using AsNoTracking for reads in agentcms.api/Repositories/SiteRepository.cs
+- [X] T021 [P] [US1] Create ISiteService interface with CreateAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync methods in agentcms.api/Services/ISiteService.cs
+- [X] T022 [US1] Implement SiteService with validation (Name required, unique, max 255), deletion guard (check for pages/assets), and DTO mapping in agentcms.api/Services/SiteService.cs
+- [X] T023 [US1] Create SitesController with POST, GET, GET (by ID), PUT, DELETE endpoints mapped to /v1/sites in agentcms.api/Controllers/SitesController.cs
+- [X] T024 [US1] Implement POST /v1/sites endpoint returning 201 with Location header and SiteDto in agentcms.api/Controllers/SitesController.cs
+- [X] T025 [US1] Implement GET /v1/sites endpoint returning 200 with array of SiteDto in agentcms.api/Controllers/SitesController.cs
+- [X] T026 [US1] Implement GET /v1/sites/{siteId} endpoint returning 200 or 204 (non-standard not found) in agentcms.api/Controllers/SitesController.cs
+- [X] T027 [US1] Implement PUT /v1/sites/{siteId} endpoint with validation and 200 or 204 response in agentcms.api/Controllers/SitesController.cs
+- [X] T028 [US1] Implement DELETE /v1/sites/{siteId} endpoint with deletion guard returning 400 if content exists in agentcms.api/Controllers/SitesController.cs
+- [X] T029 [US1] Register ISiteRepository and ISiteService in dependency injection container in agentcms.api/Program.cs
 
 **Checkpoint**: User Story 1 complete - Sites CRUD fully functional and testable independently
 
@@ -82,22 +82,22 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 ### Implementation for User Story 2
 
-- [ ] T030 [P] [US2] Create Page entity model (Id, SiteId, Title, Body, CreatedDate, UpdatedDate, PublishedDate, CreatedBy, UpdatedBy) in agentcms.api/Models/Entities/Page.cs
-- [ ] T031 [P] [US2] Create PageDto, CreatePageDto, UpdatePageDto with IsPublished boolean mapping to PublishedDate in agentcms.api/Models/DTOs/PageDto.cs
-- [ ] T032 [P] [US2] Create IPageRepository interface with AddAsync, GetByIdAsync, ListBySiteAsync, UpdateAsync, DeleteAsync methods in agentcms.api/Repositories/IPageRepository.cs
-- [ ] T033 [US2] Implement PageRepository with tenant isolation filtering (all queries MUST include SiteId check) in agentcms.api/Repositories/PageRepository.cs
-- [ ] T034 [P] [US2] Create IPageService interface with CreateAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync accepting siteId parameter in agentcms.api/Services/IPageService.cs
-- [ ] T035 [US2] Implement PageService with validation (Title required max 255), IsPublished → PublishedDate mapping, and timestamp management in agentcms.api/Services/PageService.cs
-- [ ] T035a [US2] Add SiteId existence validation in PageService.CreateAsync: query SiteRepository to verify site exists before creating page, return 400 if not found in agentcms.api/Services/PageService.cs
-- [ ] T036 [US2] Implement CreatedDate/UpdatedDate auto-population (DateTime.UtcNow) in PageService.CreateAsync and UpdateAsync in agentcms.api/Services/PageService.cs
-- [ ] T037 [US2] Implement PublishedDate logic: IsPublished=true sets DateTime.UtcNow, IsPublished=false sets null in agentcms.api/Services/PageService.cs
-- [ ] T038 [US2] Create PagesController with POST, GET, GET (by ID), PUT, DELETE endpoints mapped to /v1/sites/{siteId}/pages in agentcms.api/Controllers/PagesController.cs
-- [ ] T039 [US2] Implement POST /v1/sites/{siteId}/pages endpoint returning 201 with Location header and PageDto in agentcms.api/Controllers/PagesController.cs
-- [ ] T039a [US2] Add route parameter validation in PagesController: return 400 Bad Request if siteId is null, empty, or invalid GUID format for all endpoints in agentcms.api/Controllers/PagesController.cs
-- [ ] T040 [US2] Implement GET /v1/sites/{siteId}/pages endpoint with optional isPublished query parameter filtering in agentcms.api/Controllers/PagesController.cs
-- [ ] T041 [US2] Implement GET /v1/sites/{siteId}/pages/{pageId} endpoint with tenant isolation (204 if wrong site) in agentcms.api/Controllers/PagesController.cs
-- [ ] T042 [US2] Implement PUT /v1/sites/{siteId}/pages/{pageId} endpoint with publish/unpublish support in agentcms.api/Controllers/PagesController.cs
-- [ ] T043 [US2] Implement DELETE /v1/sites/{siteId}/pages/{pageId} endpoint with tenant isolation check in agentcms.api/Controllers/PagesController.cs
+- [X] T030 [P] [US2] Create Page entity model (Id, SiteId, Title, Body, CreatedDate, UpdatedDate, PublishedDate, CreatedBy, UpdatedBy) in agentcms.api/Models/Entities/Page.cs
+- [X] T031 [P] [US2] Create PageDto, CreatePageDto, UpdatePageDto with IsPublished boolean mapping to PublishedDate in agentcms.api/Models/DTOs/PageDto.cs
+- [X] T032 [P] [US2] Create IPageRepository interface with AddAsync, GetByIdAsync, ListBySiteAsync, UpdateAsync, DeleteAsync methods in agentcms.api/Repositories/IPageRepository.cs
+- [X] T033 [US2] Implement PageRepository with tenant isolation filtering (all queries MUST include SiteId check) in agentcms.api/Repositories/PageRepository.cs
+- [X] T034 [P] [US2] Create IPageService interface with CreateAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync accepting siteId parameter in agentcms.api/Services/IPageService.cs
+- [X] T035 [US2] Implement PageService with validation (Title required max 255), IsPublished → PublishedDate mapping, and timestamp management in agentcms.api/Services/PageService.cs
+- [X] T035a [US2] Add SiteId existence validation in PageService.CreateAsync: query SiteRepository to verify site exists before creating page, return 400 if not found in agentcms.api/Services/PageService.cs
+- [X] T036 [US2] Implement CreatedDate/UpdatedDate auto-population (DateTime.UtcNow) in PageService.CreateAsync and UpdateAsync in agentcms.api/Services/PageService.cs
+- [X] T037 [US2] Implement PublishedDate logic: IsPublished=true sets DateTime.UtcNow, IsPublished=false sets null in agentcms.api/Services/PageService.cs
+- [X] T038 [US2] Create PagesController with POST, GET, GET (by ID), PUT, DELETE endpoints mapped to /v1/sites/{siteId}/pages in agentcms.api/Controllers/PagesController.cs
+- [X] T039 [US2] Implement POST /v1/sites/{siteId}/pages endpoint returning 201 with Location header and PageDto in agentcms.api/Controllers/PagesController.cs
+- [X] T039a [US2] Add route parameter validation in PagesController: return 400 Bad Request if siteId is null, empty, or invalid GUID format for all endpoints in agentcms.api/Controllers/PagesController.cs
+- [X] T040 [US2] Implement GET /v1/sites/{siteId}/pages endpoint with optional isPublished query parameter filtering in agentcms.api/Controllers/PagesController.cs
+- [X] T041 [US2] Implement GET /v1/sites/{siteId}/pages/{pageId} endpoint with tenant isolation (204 if wrong site) in agentcms.api/Controllers/PagesController.cs
+- [X] T042 [US2] Implement PUT /v1/sites/{siteId}/pages/{pageId} endpoint with publish/unpublish support in agentcms.api/Controllers/PagesController.cs
+- [X] T043 [US2] Implement DELETE /v1/sites/{siteId}/pages/{pageId} endpoint with tenant isolation check in agentcms.api/Controllers/PagesController.cs
 - [ ] T044 [US2] Register IPageRepository and IPageService in dependency injection container in agentcms.api/Program.cs
 
 **Checkpoint**: User Story 2 complete - Page CRUD with lifecycle fully functional, tenant-isolated, and testable independently
@@ -112,14 +112,14 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 ### Implementation for User Story 4
 
-- [ ] T045 [P] [US4] Add tenant isolation validation in PageRepository: all GetByIdAsync calls MUST filter by SiteId in agentcms.api/Repositories/PageRepository.cs
-- [ ] T046 [P] [US4] Add tenant isolation validation in AssetRepository: all GetByIdAsync calls MUST filter by SiteId (to be created in US3) in agentcms.api/Repositories/AssetRepository.cs
-- [ ] T047 [P] [US4] Add tenant isolation enforcement in PageService.GetByIdAsync: return null if page.SiteId != requested siteId in agentcms.api/Services/PageService.cs
-- [ ] T048 [P] [US4] Add tenant isolation enforcement in AssetService.GetByIdAsync: return null if asset.SiteId != requested siteId (to be created in US3) in agentcms.api/Services/AssetService.cs
-- [ ] T049 [US4] Add WHERE SiteId = @siteId clause to PageRepository.ListBySiteAsync query in agentcms.api/Repositories/PageRepository.cs
-- [ ] T050 [US4] Add WHERE SiteId = @siteId clause to AssetRepository.ListBySiteAsync query (to be created in US3) in agentcms.api/Repositories/AssetRepository.cs
-- [ ] T051 [US4] Verify PagesController GET/PUT/DELETE endpoints pass siteId from route to service layer in agentcms.api/Controllers/PagesController.cs
-- [ ] T052 [US4] Verify AssetsController GET/PUT/DELETE endpoints pass siteId from route to service layer (to be created in US3) in agentcms.api/Controllers/AssetsController.cs
+- [X] T045 [P] [US4] Add tenant isolation validation in PageRepository: all GetByIdAsync calls MUST filter by SiteId in agentcms.api/Repositories/PageRepository.cs
+- [X] T046 [P] [US4] Add tenant isolation validation in AssetRepository: all GetByIdAsync calls MUST filter by SiteId (to be created in US3) in agentcms.api/Repositories/AssetRepository.cs
+- [X] T047 [P] [US4] Add tenant isolation enforcement in PageService.GetByIdAsync: return null if page.SiteId != requested siteId in agentcms.api/Services/PageService.cs
+- [X] T048 [P] [US4] Add tenant isolation enforcement in AssetService.GetByIdAsync: return null if asset.SiteId != requested siteId (to be created in US3) in agentcms.api/Services/AssetService.cs
+- [X] T049 [US4] Add WHERE SiteId = @siteId clause to PageRepository.ListBySiteAsync query in agentcms.api/Repositories/PageRepository.cs
+- [X] T050 [US4] Add WHERE SiteId = @siteId clause to AssetRepository.ListBySiteAsync query (to be created in US3) in agentcms.api/Repositories/AssetRepository.cs
+- [X] T051 [US4] Verify PagesController GET/PUT/DELETE endpoints pass siteId from route to service layer in agentcms.api/Controllers/PagesController.cs
+- [X] T052 [US4] Verify AssetsController GET/PUT/DELETE endpoints pass siteId from route to service layer (to be created in US3) in agentcms.api/Controllers/AssetsController.cs
 
 **Checkpoint**: User Story 4 complete - Tenant isolation enforced at repository and service layers, cross-tenant access blocked
 
@@ -133,28 +133,28 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 ### Implementation for User Story 3
 
-- [ ] T053 [P] [US3] Create Asset entity model (Id, SiteId, Filename, MimeType, Url, CreatedDate, CreatedBy) in agentcms.api/Models/Entities/Asset.cs
-- [ ] T054 [P] [US3] Create AssetDto, CreateAssetDto (IFormFile), CreateAssetFromUrlDto with validation in agentcms.api/Models/DTOs/AssetDto.cs
-- [ ] T055 [P] [US3] Create IAssetRepository interface with AddAsync, GetByIdAsync, ListBySiteAsync, DeleteAsync methods in agentcms.api/Repositories/IAssetRepository.cs
-- [ ] T056 [US3] Implement AssetRepository with tenant isolation filtering (SiteId checks) in agentcms.api/Repositories/AssetRepository.cs
-- [ ] T057 [P] [US3] Create IAssetService interface with UploadAsync, CreateFromUrlAsync, GetByIdAsync, ListAsync, DeleteAsync, DownloadAsync methods in agentcms.api/Services/IAssetService.cs
-- [ ] T058 [US3] Implement AssetService.UploadAsync with MIME validation (image/jpeg, image/png, application/pdf only) in agentcms.api/Services/AssetService.cs
-- [ ] T058a [US3] Add SiteId existence validation in AssetService.UploadAsync and CreateFromUrlAsync: verify site exists before creating asset, return 400 if not found in agentcms.api/Services/AssetService.cs
-- [ ] T059 [US3] Implement file size validation (30 MB max, reject 0 byte empty files) in AssetService.UploadAsync throwing ValidationException if exceeded in agentcms.api/Services/AssetService.cs
-- [ ] T060 [US3] Implement GUID filename generation and IFileStore.SaveAsync call in AssetService.UploadAsync in agentcms.api/Services/AssetService.cs
-- [ ] T061 [US3] Implement URL generation logic: {baseUrl}/v1/sites/{siteId}/assets/{assetId}/file in AssetService.UploadAsync in agentcms.api/Services/AssetService.cs
-- [ ] T062 [US3] Implement AssetService.CreateFromUrlAsync for client-provided URLs (no local storage) in agentcms.api/Services/AssetService.cs
-- [ ] T063 [US3] Implement AssetService.DownloadAsync calling IFileStore.GetStreamAsync with error handling for missing files in agentcms.api/Services/AssetService.cs
-- [ ] T064 [US3] Implement AssetService.DeleteAsync with IFileStore.DeleteAsync call (delete file + record) in agentcms.api/Services/AssetService.cs
-- [ ] T065 [US3] Create AssetsController with POST (multipart), POST /url (JSON), GET, GET (by ID), DELETE, GET /file endpoints in agentcms.api/Controllers/AssetsController.cs
-- [ ] T066 [US3] Implement POST /v1/sites/{siteId}/assets endpoint accepting multipart/form-data with IFormFile in agentcms.api/Controllers/AssetsController.cs
-- [ ] T067 [US3] Implement POST /v1/sites/{siteId}/assets/url endpoint accepting JSON with url, filename, mimeType in agentcms.api/Controllers/AssetsController.cs
-- [ ] T068 [US3] Implement GET /v1/sites/{siteId}/assets endpoint returning array of AssetDto in agentcms.api/Controllers/AssetsController.cs
-- [ ] T069 [US3] Implement GET /v1/sites/{siteId}/assets/{assetId} endpoint with tenant isolation in agentcms.api/Controllers/AssetsController.cs
-- [ ] T070 [US3] Implement GET /v1/sites/{siteId}/assets/{assetId}/file endpoint streaming file with Content-Type header in agentcms.api/Controllers/AssetsController.cs
-- [ ] T071 [US3] Implement DELETE /v1/sites/{siteId}/assets/{assetId} endpoint with file deletion in agentcms.api/Controllers/AssetsController.cs
-- [ ] T072 [US3] Register IAssetRepository and IAssetService in dependency injection container in agentcms.api/Program.cs
-- [ ] T073 [US3] Configure multipart request size limit (30 MB) in Program.cs or web.config in agentcms.api/Program.cs
+- [X] T053 [P] [US3] Create Asset entity model (Id, SiteId, Filename, MimeType, Url, CreatedDate, CreatedBy) in agentcms.api/Models/Entities/Asset.cs
+- [X] T054 [P] [US3] Create AssetDto, CreateAssetDto (IFormFile), CreateAssetFromUrlDto with validation in agentcms.api/Models/DTOs/AssetDto.cs
+- [X] T055 [P] [US3] Create IAssetRepository interface with AddAsync, GetByIdAsync, ListBySiteAsync, DeleteAsync methods in agentcms.api/Repositories/IAssetRepository.cs
+- [X] T056 [US3] Implement AssetRepository with tenant isolation filtering (SiteId checks) in agentcms.api/Repositories/AssetRepository.cs
+- [X] T057 [P] [US3] Create IAssetService interface with UploadAsync, CreateFromUrlAsync, GetByIdAsync, ListAsync, DeleteAsync, DownloadAsync methods in agentcms.api/Services/IAssetService.cs
+- [X] T058 [US3] Implement AssetService.UploadAsync with MIME validation (image/jpeg, image/png, application/pdf only) in agentcms.api/Services/AssetService.cs
+- [X] T058a [US3] Add SiteId existence validation in AssetService.UploadAsync and CreateFromUrlAsync: verify site exists before creating asset, return 400 if not found in agentcms.api/Services/AssetService.cs
+- [X] T059 [US3] Implement file size validation (30 MB max, reject 0 byte empty files) in AssetService.UploadAsync throwing ValidationException if exceeded in agentcms.api/Services/AssetService.cs
+- [X] T060 [US3] Implement GUID filename generation and IFileStore.SaveAsync call in AssetService.UploadAsync in agentcms.api/Services/AssetService.cs
+- [X] T061 [US3] Implement URL generation logic: {baseUrl}/v1/sites/{siteId}/assets/{assetId}/file in AssetService.UploadAsync in agentcms.api/Services/AssetService.cs
+- [X] T062 [US3] Implement AssetService.CreateFromUrlAsync for client-provided URLs (no local storage) in agentcms.api/Services/AssetService.cs
+- [X] T063 [US3] Implement AssetService.DownloadAsync calling IFileStore.GetStreamAsync with error handling for missing files in agentcms.api/Services/AssetService.cs
+- [X] T064 [US3] Implement AssetService.DeleteAsync with IFileStore.DeleteAsync call (delete file + record) in agentcms.api/Services/AssetService.cs
+- [X] T065 [US3] Create AssetsController with POST (multipart), POST /url (JSON), GET, GET (by ID), DELETE, GET /file endpoints in agentcms.api/Controllers/AssetsController.cs
+- [X] T066 [US3] Implement POST /v1/sites/{siteId}/assets endpoint accepting multipart/form-data with IFormFile in agentcms.api/Controllers/AssetsController.cs
+- [X] T067 [US3] Implement POST /v1/sites/{siteId}/assets/url endpoint accepting JSON with url, filename, mimeType in agentcms.api/Controllers/AssetsController.cs
+- [X] T068 [US3] Implement GET /v1/sites/{siteId}/assets endpoint returning array of AssetDto in agentcms.api/Controllers/AssetsController.cs
+- [X] T069 [US3] Implement GET /v1/sites/{siteId}/assets/{assetId} endpoint with tenant isolation in agentcms.api/Controllers/AssetsController.cs
+- [X] T070 [US3] Implement GET /v1/sites/{siteId}/assets/{assetId}/file endpoint streaming file with Content-Type header in agentcms.api/Controllers/AssetsController.cs
+- [X] T071 [US3] Implement DELETE /v1/sites/{siteId}/assets/{assetId} endpoint with file deletion in agentcms.api/Controllers/AssetsController.cs
+- [X] T072 [US3] Register IAssetRepository and IAssetService in dependency injection container in agentcms.api/Program.cs
+- [X] T073 [US3] Configure multipart request size limit (30 MB) in Program.cs or web.config in agentcms.api/Program.cs
 
 **Checkpoint**: User Story 3 complete - Asset upload/download fully functional with MIME/size validation and tenant isolation
 
@@ -164,18 +164,18 @@ description: "Implementation tasks for AgentCMS CRUD API"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T074 [P] Add XML documentation comments to all public APIs (controllers, services, repositories) for Swagger UI
-- [ ] T075 [P] Configure file logging with rolling interval (daily) in appsettings.json Logging section
-- [ ] T076 [P] Add ModelState validation error mapping to ErrorResponse format in ExceptionHandlerMiddleware in agentcms.api/Middleware/ExceptionHandlerMiddleware.cs
-- [ ] T077 [P] Create health check endpoint GET /health returning 200 OK with basic status in agentcms.api/Controllers/HealthController.cs
-- [ ] T078 [P] Add CORS policy configuration for localhost origins (future frontend integration) in agentcms.api/Program.cs
-- [ ] T079 Verify Site deletion guard implementation (from T022): test DELETE /v1/sites/{siteId} with existing pages/assets returns 400 with clear error message, document behavior in controller XML comments in agentcms.api/Controllers/SitesController.cs
-- [ ] T080 [P] Verify all controller actions return correct status codes per OpenAPI spec (201 with Location, 200, 204, 400, 500)
-- [ ] T081 [P] Verify all timestamps use DateTime.UtcNow and serialize as ISO 8601 in JSON
-- [ ] T082 [P] Add Data Annotations validation attributes to all DTOs ([Required], [MaxLength]) in agentcms.api/Models/DTOs/
+- [X] T074 [P] Add XML documentation comments to all public APIs (controllers, services, repositories) for Swagger UI
+- [X] T075 [P] Configure file logging with rolling interval (daily) in appsettings.json Logging section
+- [X] T076 [P] Add ModelState validation error mapping to ErrorResponse format in ExceptionHandlerMiddleware in agentcms.api/Middleware/ExceptionHandlerMiddleware.cs
+- [X] T077 [P] Create health check endpoint GET /health returning 200 OK with basic status in agentcms.api/Controllers/HealthController.cs
+- [X] T078 [P] Add CORS policy configuration for localhost origins (future frontend integration) in agentcms.api/Program.cs
+- [X] T079 Verify Site deletion guard implementation (from T022): test DELETE /v1/sites/{siteId} with existing pages/assets returns 400 with clear error message, document behavior in controller XML comments in agentcms.api/Controllers/SitesController.cs
+- [X] T080 [P] Verify all controller actions return correct status codes per OpenAPI spec (201 with Location, 200, 204, 400, 500)
+- [X] T081 [P] Verify all timestamps use DateTime.UtcNow and serialize as ISO 8601 in JSON
+- [X] T082 [P] Add Data Annotations validation attributes to all DTOs ([Required], [MaxLength]) in agentcms.api/Models/DTOs/
 - [ ] T083 Run through quickstart.md scenarios manually to validate end-to-end workflows
-- [ ] T084 [P] Document non-standard 204 behavior in Swagger API description and controller XML comments
-- [ ] T085 [P] Create file upload directory C:\AgentCMS\uploads and set permissions if not exists during first run
+- [X] T084 [P] Document non-standard 204 behavior in Swagger API description and controller XML comments
+- [X] T085 [P] Create file upload directory C:\AgentCMS\uploads and set permissions if not exists during first run
 
 ---
 
