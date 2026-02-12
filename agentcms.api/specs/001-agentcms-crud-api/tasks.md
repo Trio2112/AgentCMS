@@ -88,10 +88,12 @@ description: "Implementation tasks for AgentCMS CRUD API"
 - [ ] T033 [US2] Implement PageRepository with tenant isolation filtering (all queries MUST include SiteId check) in agentcms.api/Repositories/PageRepository.cs
 - [ ] T034 [P] [US2] Create IPageService interface with CreateAsync, GetByIdAsync, ListAsync, UpdateAsync, DeleteAsync accepting siteId parameter in agentcms.api/Services/IPageService.cs
 - [ ] T035 [US2] Implement PageService with validation (Title required max 255), IsPublished → PublishedDate mapping, and timestamp management in agentcms.api/Services/PageService.cs
+- [ ] T035a [US2] Add SiteId existence validation in PageService.CreateAsync: query SiteRepository to verify site exists before creating page, return 400 if not found in agentcms.api/Services/PageService.cs
 - [ ] T036 [US2] Implement CreatedDate/UpdatedDate auto-population (DateTime.UtcNow) in PageService.CreateAsync and UpdateAsync in agentcms.api/Services/PageService.cs
 - [ ] T037 [US2] Implement PublishedDate logic: IsPublished=true sets DateTime.UtcNow, IsPublished=false sets null in agentcms.api/Services/PageService.cs
 - [ ] T038 [US2] Create PagesController with POST, GET, GET (by ID), PUT, DELETE endpoints mapped to /v1/sites/{siteId}/pages in agentcms.api/Controllers/PagesController.cs
 - [ ] T039 [US2] Implement POST /v1/sites/{siteId}/pages endpoint returning 201 with Location header and PageDto in agentcms.api/Controllers/PagesController.cs
+- [ ] T039a [US2] Add route parameter validation in PagesController: return 400 Bad Request if siteId is null, empty, or invalid GUID format for all endpoints in agentcms.api/Controllers/PagesController.cs
 - [ ] T040 [US2] Implement GET /v1/sites/{siteId}/pages endpoint with optional isPublished query parameter filtering in agentcms.api/Controllers/PagesController.cs
 - [ ] T041 [US2] Implement GET /v1/sites/{siteId}/pages/{pageId} endpoint with tenant isolation (204 if wrong site) in agentcms.api/Controllers/PagesController.cs
 - [ ] T042 [US2] Implement PUT /v1/sites/{siteId}/pages/{pageId} endpoint with publish/unpublish support in agentcms.api/Controllers/PagesController.cs
@@ -137,7 +139,8 @@ description: "Implementation tasks for AgentCMS CRUD API"
 - [ ] T056 [US3] Implement AssetRepository with tenant isolation filtering (SiteId checks) in agentcms.api/Repositories/AssetRepository.cs
 - [ ] T057 [P] [US3] Create IAssetService interface with UploadAsync, CreateFromUrlAsync, GetByIdAsync, ListAsync, DeleteAsync, DownloadAsync methods in agentcms.api/Services/IAssetService.cs
 - [ ] T058 [US3] Implement AssetService.UploadAsync with MIME validation (image/jpeg, image/png, application/pdf only) in agentcms.api/Services/AssetService.cs
-- [ ] T059 [US3] Implement file size validation (30 MB max) in AssetService.UploadAsync throwing ValidationException if exceeded in agentcms.api/Services/AssetService.cs
+- [ ] T058a [US3] Add SiteId existence validation in AssetService.UploadAsync and CreateFromUrlAsync: verify site exists before creating asset, return 400 if not found in agentcms.api/Services/AssetService.cs
+- [ ] T059 [US3] Implement file size validation (30 MB max, reject 0 byte empty files) in AssetService.UploadAsync throwing ValidationException if exceeded in agentcms.api/Services/AssetService.cs
 - [ ] T060 [US3] Implement GUID filename generation and IFileStore.SaveAsync call in AssetService.UploadAsync in agentcms.api/Services/AssetService.cs
 - [ ] T061 [US3] Implement URL generation logic: {baseUrl}/v1/sites/{siteId}/assets/{assetId}/file in AssetService.UploadAsync in agentcms.api/Services/AssetService.cs
 - [ ] T062 [US3] Implement AssetService.CreateFromUrlAsync for client-provided URLs (no local storage) in agentcms.api/Services/AssetService.cs
@@ -166,7 +169,7 @@ description: "Implementation tasks for AgentCMS CRUD API"
 - [ ] T076 [P] Add ModelState validation error mapping to ErrorResponse format in ExceptionHandlerMiddleware in agentcms.api/Middleware/ExceptionHandlerMiddleware.cs
 - [ ] T077 [P] Create health check endpoint GET /health returning 200 OK with basic status in agentcms.api/Controllers/HealthController.cs
 - [ ] T078 [P] Add CORS policy configuration for localhost origins (future frontend integration) in agentcms.api/Program.cs
-- [ ] T079 Add Site deletion guard validation: throw ValidationException with message if pages/assets exist in agentcms.api/Services/SiteService.cs
+- [ ] T079 Verify Site deletion guard implementation (from T022): test DELETE /v1/sites/{siteId} with existing pages/assets returns 400 with clear error message, document behavior in controller XML comments in agentcms.api/Controllers/SitesController.cs
 - [ ] T080 [P] Verify all controller actions return correct status codes per OpenAPI spec (201 with Location, 200, 204, 400, 500)
 - [ ] T081 [P] Verify all timestamps use DateTime.UtcNow and serialize as ISO 8601 in JSON
 - [ ] T082 [P] Add Data Annotations validation attributes to all DTOs ([Required], [MaxLength]) in agentcms.api/Models/DTOs/
@@ -323,22 +326,22 @@ Any Dev: T029 - DI registration
 
 ## Task Completion Tracking
 
-**Total Tasks**: 85  
-**Parallel Tasks**: 34 (40% can run in parallel with sufficient team capacity)
+**Total Tasks**: 89 (85 original + 4 validation tasks added during analysis)  
+**Parallel Tasks**: 34 (38% can run in parallel with sufficient team capacity)
 
 **By Phase**:
 - Phase 1 (Setup): 4 tasks
 - Phase 2 (Foundational): 12 tasks (CRITICAL PATH - blocks all user stories)
 - Phase 3 (User Story 1): 13 tasks
-- Phase 4 (User Story 2): 15 tasks
+- Phase 4 (User Story 2): 17 tasks (15 original + 2 validation tasks)
 - Phase 5 (User Story 4): 8 tasks
-- Phase 6 (User Story 3): 21 tasks
+- Phase 6 (User Story 3): 23 tasks (21 original + 2 validation tasks)
 - Phase 7 (Polish): 12 tasks
 
 **By User Story**:
 - US1 (Sites): 13 tasks - ~2-3 days
-- US2 (Pages): 15 tasks - ~2-3 days
-- US3 (Assets): 21 tasks - ~3-4 days
+- US2 (Pages): 17 tasks (15 + 2 validation) - ~2-3 days
+- US3 (Assets): 23 tasks (21 + 2 validation) - ~3-4 days
 - US4 (Tenant Isolation): 8 tasks - ~1 day
 
 **Critical Path**: Phase 1 → Phase 2 → US1 (Sites) = ~5-7 days total

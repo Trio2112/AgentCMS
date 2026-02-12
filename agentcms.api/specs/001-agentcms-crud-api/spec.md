@@ -27,7 +27,7 @@ A site owner or platform administrator creates a new site to host CMS content, e
 
 ### User Story 2 - Manage Pages with Lifecycle States (Priority: P1)
 
-Content editors create, edit, preview, and publish pages within a site, supporting draft (preview) and published states.
+Content editors create, edit, preview, and publish pages within a site, supporting draft and published states.
 
 **Why this priority**: Core CMS functionality - pages are the primary content type. Publishing workflow is mandatory per requirements.
 
@@ -110,7 +110,7 @@ All content operations respect site boundaries, ensuring that content from one s
 - **FR-013**: System MUST provide API endpoints to list pages filtered by publish status (published vs preview/draft)
 - **FR-014**: System MUST provide API endpoints to update page Title, Body, UpdatedBy, and PublishedDate fields
 - **FR-015**: System MUST update the UpdatedDate timestamp whenever a page is modified
-- **FR-016**: System MUST treat a page as "published" when PublishedDate is populated and as "preview/draft" when PublishedDate is null
+- **FR-016**: System MUST treat a page as "published" when PublishedDate is populated and as "draft" when PublishedDate is null
 - **FR-017**: System MUST provide API endpoints to delete a page permanently
 
 #### Assets Resource
@@ -132,7 +132,7 @@ All content operations respect site boundaries, ensuring that content from one s
 ### Key Entities
 
 - **Site**: Represents a top-level content container (tenant). Attributes: unique identifier, name, description. Owns all pages and assets within its scope.
-- **Page**: Represents a content page with fixed schema. Attributes: unique identifier, site identifier (foreign reference to Site), title, body, created date, updated date, published date (nullable), created by, updated by. Lifecycle: preview (draft) when published date is null, published when published date is populated.
+- **Page**: Represents a content page with fixed schema. Attributes: unique identifier, site identifier (foreign reference to Site), title, body, created date, updated date, published date (nullable), created by, updated by. Lifecycle: draft when published date is null, published when published date is populated.
 - **Asset**: Represents an uploaded media file. Attributes: unique identifier, site identifier (foreign reference to Site), filename, mime type, storage URL, created date, created by. Storage implementation is abstracted; API returns a usable URL.
 
 ## Success Criteria *(mandatory)*
@@ -144,7 +144,7 @@ All content operations respect site boundaries, ensuring that content from one s
 - **SC-003**: Developers can upload an asset and receive a functional URL that allows immediate retrieval of the uploaded file
 - **SC-004**: 100% of pages and assets are correctly isolated by site ID - cross-site queries return zero results for content from other sites
 - **SC-005**: API consumers can distinguish between published and preview (draft) pages by filtering on publish status, with 100% accuracy
-- **SC-006**: System supports at least 100 sites with 1,000 pages per site without API response degradation beyond acceptable thresholds (under 2 seconds for list operations)
+- **SC-006**: System supports at least 100 sites with 1,000 pages per site without API response degradation beyond acceptable thresholds (2 seconds or less for list operations, ≤2000ms)
 
 ## Assumptions
 
