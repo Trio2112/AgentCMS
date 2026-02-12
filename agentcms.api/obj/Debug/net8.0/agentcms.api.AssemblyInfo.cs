@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("agentcms.api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e7cfa06accadaa0620dcb913aaac8c461e11147e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f8aeb060e0f0899b2bc6e29d6c21383ce31152a7")]
 [assembly: System.Reflection.AssemblyProductAttribute("agentcms.api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("agentcms.api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
