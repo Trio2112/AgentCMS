@@ -13,6 +13,7 @@
 - Q: What should happen when asset uploads fail due to size limits, unsupported MIME types, or other validation issues? → A: Validate file size and type before upload starts; reject immediately with specific message if invalid
 - Q: How should the system handle concurrent edits to the same page by multiple managers? → A: Allow concurrent edits; last save wins; warn user before saving if page was modified by someone else since they opened it
 - Q: What authorization model should the admin portal use for content managers? → A: All authenticated content managers have full access to all sites, pages, and assets (no per-site or per-page restrictions)
+- Q: What accessibility standard and conformance level should the admin portal meet? → A: WCAG 2.1 Level AA (mid-level conformance - recommended standard for most web applications)
 
 ## User Scenarios & Testing
 
@@ -138,6 +139,7 @@ When multiple managers edit the same page:
 - **FR-024**: System MUST allow concurrent editing of the same page by multiple managers
 - **FR-025**: System MUST detect when a page has been modified by another user since the current user opened it for editing
 - **FR-026**: System MUST warn the user before saving if another user has modified the page, displaying who made changes and when, and allow the user to proceed or cancel
+- **FR-027**: System MUST conform to WCAG 2.1 Level AA accessibility standards for all user interfaces (Sites, Pages, Assets screens)
 
 ### Key Entities
 
@@ -156,6 +158,7 @@ When multiple managers edit the same page:
 - **SC-005**: Publication state changes (scheduled vs. published vs. unpublished) are unambiguous and visible to content managers immediately after action
 - **SC-006**: Asset upload and URL linking operations complete successfully for supported file types and valid URLs with a success rate above 95%
 - **SC-007**: Content managers can upload an asset and associate it with a page in under 2 minutes
+- **SC-008**: All user interfaces conform to WCAG 2.1 Level AA standards as validated by automated accessibility testing tools and manual keyboard navigation testing
 
 ### Validation Approach
 
@@ -165,6 +168,7 @@ When multiple managers edit the same page:
 - **SC-004**: Measured via client-side performance monitoring and server response time logging
 - **SC-005**: Verified through usability testing and user feedback surveys asking managers to interpret publication state after actions
 - **SC-006**: Measured via server-side success/failure logging for upload and asset creation operations
+- **SC-008**: Validated via automated accessibility testing tools (e.g., axe, Lighthouse accessibility audit) and manual testing with keyboard-only navigation and screen reader compatibility verification
 
 ## Assumptions
 
