@@ -135,15 +135,19 @@ if (-not $fallbackRoot) {
     exit 1
 }
 
+# Use workspace root (where .specify/ exists) instead of git root
+# This allows the workspace to be a subdirectory of a larger git repository
+$repoRoot = $fallbackRoot
+
+# Check if git is available for branch operations
 try {
-    $repoRoot = git rev-parse --show-toplevel 2>$null
+    git status 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
         $hasGit = $true
     } else {
-        throw "Git not available"
+        $hasGit = $false
     }
 } catch {
-    $repoRoot = $fallbackRoot
     $hasGit = $false
 }
 

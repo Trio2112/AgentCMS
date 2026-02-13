@@ -1,0 +1,423 @@
+openapi: 3.0.1
+info:
+  title: AgentCMS Admin API - Pages
+  description: Page management endpoints for the AgentCMS Admin Portal with scheduled publishing support
+  version: "1.0"
+
+paths:
+  /v1/sites/{siteId}/pages:
+    get:
+      summary: List all pages for a site
+      operationId: listPages
+      tags:
+        - Pages
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PageDto'
+        '400':
+          description: Invalid site ID
+        '500':
+          description: Server error
+    
+    post:
+      summary: Create a new page
+      operationId: createPage
+      tags:
+        - Pages
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePageDto'
+      responses:
+        '201':
+          description: Page created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Server error
+
+  /v1/sites/{siteId}/pages/{id}:
+    get:
+      summary: Get a specific page
+      operationId: getPage
+      tags:
+        - Pages
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDto'
+        '404':
+          description: Page not found
+        '500':
+          description: Server error
+    
+    put:
+      summary: Update a page
+      operationId: updatePage
+      tags:
+        - Pages
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePageDto'
+      responses:
+        '200':
+          description: Page updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDto'
+        '400':
+          description: Validation error
+        '404':
+          description: Page not found
+        '500':
+          description: Server error
+    
+    delete:
+      summary: Delete a page
+      operationId: deletePage
+      tags:
+        - Pages
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Page deleted successfully
+        '404':
+          description: Page not found
+        '500':
+          description: Server error
+
+  /v1/sites/{siteId}/pages/{pageId}/assets:
+    get:
+      summary: List assets associated with a page
+      operationId: listPageAssets
+      tags:
+        - Pages
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: pageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetDto'
+        '404':
+          description: Page not found
+        '500':
+          description: Server error
+
+  /v1/sites/{siteId}/pages/{pageId}/assets/{assetId}:
+    post:
+      summary: Associate an asset with a page
+      operationId: addPageAsset
+      tags:
+        - Pages
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: pageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Asset associated successfully
+        '400':
+          description: Invalid request (e.g., asset already associated)
+        '404':
+          description: Page or asset not found
+        '500':
+          description: Server error
+    
+    delete:
+      summary: Remove an asset association from a page
+      operationId: removePageAsset
+      tags:
+        - Pages
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: pageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Asset association removed successfully
+        '404':
+          description: Page, asset, or association not found
+        '500':
+          description: Server error
+
+components:
+  schemas:
+    PageDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        siteId:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        body:
+          type: string
+          nullable: true
+          description: Page content (plain text or markdown)
+        publishedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Publication date for scheduling. Null means unpublished. Future date means scheduled.
+        isPublished:
+          type: boolean
+          readOnly: true
+          description: Computed - true if publishedDate is not null and not in the future
+        createdDate:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedDate:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Last modification timestamp - used for concurrent edit detection
+        createdBy:
+          type: string
+          maxLength: 255
+          nullable: true
+        updatedBy:
+          type: string
+          maxLength: 255
+          nullable: true
+      required:
+        - id
+        - siteId
+        - title
+        - isPublished
+        - createdDate
+        - updatedDate
+    
+    CreatePageDto:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Page title (required)
+        body:
+          type: string
+          nullable: true
+          description: Page content (optional)
+        publishedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Publication date - null for unpublished, now/past for immediate publish, future for scheduled
+        createdBy:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Username or email of creator
+      required:
+        - title
+    
+    UpdatePageDto:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Page title (required)
+        body:
+          type: string
+          nullable: true
+          description: Page content (optional)
+        publishedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Publication date - set to null to unpublish
+        updatedBy:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Username or email of last editor
+      required:
+        - title
+    
+    AssetDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        siteId:
+          type: string
+          format: uuid
+          readOnly: true
+        filename:
+          type: string
+        mimeType:
+          type: string
+        url:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+          readOnly: true
+        createdBy:
+          type: string
+          nullable: true
+      required:
+        - id
+        - siteId
+        - filename
+        - mimeType
+        - url
+        - createdDate
+    
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: true
