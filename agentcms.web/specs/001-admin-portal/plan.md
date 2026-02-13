@@ -7,7 +7,7 @@
 
 ## Summary
 
-Build a React-based administrative portal for AgentCMS that enables content managers to create/edit/publish web pages, manage sites, and upload/associate assets. The solution uses React 18 + TypeScript with TanStack Query for server state management, integrating with the existing .NET/C# REST API. Key features include scheduled publishing, file upload validation, and WCAG 2.1 Level AA accessibility compliance, targeting <3s p95 page load times and 90% first-time task completion rate.
+Build a React-based administrative portal for AgentCMS that enables content managers to create/edit/publish web pages, manage sites, and upload assets. The solution uses React 18 + TypeScript with TanStack Query for server state management, integrating with the existing .NET/C# REST API. Pages use a simple isPublished boolean flag (no scheduled publishing). Assets are managed independently (no page-asset associations). Targets <3s p95 page load times, WCAG 2.1 Level AA accessibility, and 90% first-time task completion rate.
 
 ## Technical Context
 
@@ -18,8 +18,8 @@ Build a React-based administrative portal for AgentCMS that enables content mana
 **Target Platform**: Modern web browsers (Chrome, Firefox, Safari, Edge - latest 2 versions)
 **Project Type**: web (frontend only - single-page application)  
 **Performance Goals**: p95 page load <3 seconds, action feedback <2 seconds, 90% first-time task completion  
-**Constraints**: WCAG 2.1 Level AA compliance, file upload validation client-side before submission, optimistic UI updates  
-**Scale/Scope**: ~10-50 content managers, 100s-1000s of pages per site, assets up to 10MB each
+**Constraints**: WCAG 2.1 Level AA compliance, file upload validation client-side before submission, optimistic UI updates, simple boolean publish flag (no scheduled publishing)  
+**Scale/Scope**: ~10-50 content managers, 100s-1000s of pages per site, assets up to 10MB each, independent asset library (no page-asset associations)
 
 ## Constitution Check
 
@@ -51,8 +51,8 @@ The AgentCMS Constitution (`.specify/memory/constitution.md`) requires that all 
 
 **Terminology**:
 - "Site" (not "website/portal"), "Page" (not "document"), "Asset" (not "file/media")
-- "Publish" for making content live, "Draft" for work-in-progress
-- "Schedule" for future publishing, not "timer/delay"
+- "Publish" for making content live (isPublished=true), "Draft" for work-in-progress (isPublished=false)
+- No scheduled publishing - simple toggle between Published and Draft states
 
 **Component Reuse**:
 - `<FormField>` wrapper for all inputs (label, error, help text)
@@ -131,7 +131,7 @@ specs/001-admin-portal/
 │   ├── sites.openapi.yaml
 │   ├── pages.openapi.yaml
 │   └── assets.openapi.yaml
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT YET CREATED)
+└── tasks.md             # Phase 2 output (/speckit.tasks command)
 ```
 
 ### Source Code (repository root)
@@ -146,11 +146,11 @@ agentcms.web/
 │   │   │   ├── hooks/         # useSites, useCreateSite, etc.
 │   │   │   └── types.ts       # Site-related TypeScript types
 │   │   ├── pages/             # Page management
-│   │   │   ├── components/    # PagesList, PageEditor, PageScheduler
+│   │   │   ├── components/    # PagesList, PageEditor, PublishToggle
 │   │   │   ├── hooks/         # usePages, usePublishPage, etc.
 │   │   │   └── types.ts
 │   │   └── assets/            # Asset management
-│   │       ├── components/    # AssetUpload, AssetGallery, AssetPicker
+│   │       ├── components/    # AssetUpload, AssetGallery
 │   │       ├── hooks/         # useAssets, useUploadAsset, etc.
 │   │       └── types.ts
 │   ├── components/            # Shared/reusable components
@@ -184,9 +184,10 @@ agentcms.web/
 
 **Structure Decision**: Web application (frontend only) with feature-based organization. Backend API exists separately (.NET/C# documented in `agentcms.api-swagger.json`). Frontend organized by domain features (sites, pages, assets) rather than technical layers, with shared components and API client as supporting infrastructure.
 
-**Critical Dependencies**:
-- Backend must add `publishedDate` field to Page entity (see [data-model.md](data-model.md))
-- Backend must implement page-asset association endpoints (see [contracts/pages.openapi.yaml](contracts/pages.openapi.yaml))
+**Scope Simplifications**:
+- **No publishedDate field**: Pages use simple isPublished boolean flag (no scheduled publishing)
+- **No page-asset associations**: Assets managed independently in standalone library (no many-to-many relationship)
+- **No backend dependencies**: Existing API already supports all requirements
 
 ## Complexity Tracking
 

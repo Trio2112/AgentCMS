@@ -4,6 +4,8 @@
 **Date**: February 13, 2026  
 **Purpose**: Setup instructions, test scenarios, and validation workflows for local development and testing
 
+**Scope Note**: Pages use simple isPublished boolean toggle. Assets are managed independently (no page-asset associations).
+
 ## Prerequisites
 
 - **Node.js**: 20 LTS or later
@@ -17,7 +19,7 @@
 
 ```bash
 # Navigate to the admin portal directory
-cd admin-portal
+cd agentcms.web
 
 # Install dependencies
 npm install
@@ -69,316 +71,311 @@ Open the browser console and check for successful API connection:
 
 ### Test Scenario 1: Create and Publish a Page (User Story 1)
 
-**Objective**: Verify content managers can create, schedule, and publish pages.
+**Objective**: Verify content managers can create pages and toggle publish/draft status.
 
 **Steps**:
 1. Navigate to Sites list → Select a site (or create one if empty)
 2. Click "Pages" → Click "New Page"
-3. Enter page title: "Test Page - Immediate Publish"
+3. Enter page title: "Test Page - Published"
 4. Enter body content: "This is a test page created for validation."
-5. Set published date to **today's date and current time**
+5. Check the "Publish" checkbox (or toggle to Published)
 6. Click "Save"
 
 **Expected Results**:
 - Page is created with `isPublished = true`
 - Page appears in the Pages list with "Published" badge (green)
-- Page details show published date, createdDate, createdBy
+- Page details show title, body, isPublished=true, createdDate, createdBy
 
-**Variant 1: Scheduled Publishing**
-- Set published date to **1 day in the future**
-- Expected: `isPublished = false`, "Scheduled" badge (blue), shows future date
+**Variant 1: Create Draft Page**
+- Leave "Publish" checkbox unchecked (or toggle to Draft)
+- Expected: `isPublished = false`, "Draft" badge (grey)
 
-**Variant 2: Unpublish a Page**
+**Variant 2: Toggle Publication Status**
 - Open a published page for editing
-- Clear the published date field (set to null)
+- Uncheck "Publish" checkbox (or toggle to Draft)
 - Save
-- Expected: `isPublished = false`, "Unpublished" badge (grey), no published date shown
+- Expected: `isPublished = false`, "Draft" badge (grey)
+- Re-open the page, check "Publish" checkbox
+- Save
+- Expected: `isPublished = true`, "Published" badge (green)
 
-**Acceptance Criteria**: FR-001, FR-002, FR-003, FR-021
+**Acceptance Criteria**: FR-001, FR-002, FR-003
 
 ---
 
 ### Test Scenario 2: Upload and Manage Assets (User Story 2)
 
-**Objective**: Verify content managers can upload files and create URL-based assets.
+**Objective**: Verify content managers can upload files, create assets from URLs, and view asset metadata.
 
-**Steps (File Upload)**:
+**Steps**:
 1. Navigate to Sites list → Select a site
 2. Click "Assets" → Click "Upload Asset"
-3. Select a test image file (e.g., `test-image.jpg`, < 10MB)
-4. Click "Upload"
+3. **File Upload Test**:
+   - Drag and drop an image file (e.g., `test-image.jpg`, <10MB)
+   - OR click file picker and select a file
+   - Expected: Upload progress indicator appears
+   - Expected: Asset created with filename, MIME type (e.g., `image/jpeg`), storage URL, createdDate, createdBy
+4. **URL Asset Test**:
+   - Click "Add from URL"
+   - Enter external URL: `https://example.com/sample.pdf`
+   - Click "Add"
+   - Expected: Asset created with URL, MIME type inferred, createdDate, createdBy
+5. **View Asset List**:
+   - Navigate to Assets list
+   - Expected: See all assets with filename, MIME type, URL, createdDate, createdBy
 
 **Expected Results**:
-- File validation occurs **before** upload (check DevTools Network tab - no request if validation fails)
-- Asset appears in Assets list with filename, MIME type (`image/jpeg`), thumbnail preview
-- Asset shows createdDate and createdBy
+- Uploaded files create asset records with detected MIME type
+- External URLs create asset records with provided URL
+- Asset list displays all metadata in scannable format
 
-**Variant 1: URL-Based Asset**
-- Click "Link Asset from URL"
-- Enter URL: `https://example.com/document.pdf`
-- Click "Create"
-- Expected: Asset created with `mimeType: application/pdf`, URL is displayed
+**Variant 1: File Validation - Size Limit**
+- Attempt to upload a file >10MB
+- Expected: Immediate error message "File size must be less than 10MB"
+- Expected: Upload does not begin
 
-**Variant 2: Invalid File (Validation)**
-- Attempt to upload a 15MB file
-- Expected: Error message **before upload starts** - "File size (15.00MB) exceeds 10MB limit"
-- Attempt to upload an unsupported file type (e.g., `.exe`)
-- Expected: Error message - "Unsupported file type: application/x-msdownload"
+**Variant 2: File Validation - MIME Type**
+- Attempt to upload an unsupported file type (e.g., `.exe`, `.zip`)
+- Expected: Immediate error message "File type not supported. Allowed: JPEG, PNG, GIF, PDF, HTML"
+- Expected: Upload does not begin
 
-**Acceptance Criteria**: FR-005, FR-006, FR-007, FR-008, FR-022, FR-023
+**Acceptance Criteria**: FR-005, FR-006, FR-007, FR-008, FR-019, FR-020
 
 ---
 
-### Test Scenario 3: Associate Assets with Pages (User Story 3)
+### Test Scenario 3: Create and Edit Sites (User Story 3, formerly US4)
 
-**Objective**: Verify content managers can link assets to pages and remove associations.
-
-**Prerequisites**: At least 1 page and 2 assets exist in a site.
+**Objective**: Verify content managers can create sites and edit site properties.
 
 **Steps**:
-1. Navigate to Pages list → Open a page for editing
-2. Scroll to "Associated Assets" section → Click "Add Asset"
-3. Select 2 assets from the asset library
-4. Click "Add Selected Assets"
+1. Navigate to Sites list
+2. Click "New Site"
+3. Enter site name: "Test Site"
+4. Enter description: "This is a test site for validation purposes"
+5. Click "Save"
 
 **Expected Results**:
-- Assets appear in the page's "Associated Assets" list
-- Each asset shows filename, MIME type, URL
-- Associations are saved when page is saved
-
-**Variant 1: Remove Asset Association**
-- In the "Associated Assets" section, click "Remove" on one asset
-- Save the page
-- Expected: Asset is removed from page associations but still exists in Assets list
-
-**Variant 2: View Assets from Asset Library**
-- Navigate to Assets list
-- Verify removed asset is still present (not deleted, only disassociated)
-
-**Acceptance Criteria**: FR-009, FR-010
-
----
-
-### Test Scenario 4: Create and Edit Sites (User Story 4)
-
-**Objective**: Verify content managers can create and update site records.
-
-**Steps**:
-1. Navigate to Sites list → Click "New Site"
-2. Enter site name: "Test Site for QA"
-3. Enter description: "This site is for testing purposes."
-4. Click "Save"
-
-**Expected Results**:
-- Site is created with unique ID
+- Site created with unique ID
 - Site appears in Sites list with name and description
+- Site details show id (read-only), name, description
 
 **Variant 1: Edit Site**
-- Click on the site from the list → Click "Edit"
+- Open a site for editing
 - Change name to "Updated Test Site"
-- Change description to "Description updated successfully"
-- Click "Save"
-- Expected: Changes are saved and visible immediately in list view
+- Change description to "Updated description"
+- Save
+- Expected: Changes persist and display immediately in site list
 
-**Variant 2: Required Validation**
+**Variant 2: Required Field Validation**
 - Click "New Site"
 - Leave name field empty
 - Attempt to save
-- Expected: Error message "Site name is required" appears below the name field
+- Expected: Validation error "Site name is required"
+- Expected: Site not created
 
-**Acceptance Criteria**: FR-011, FR-012, FR-013, FR-019, FR-020
+**Acceptance Criteria**: FR-009, FR-010, FR-011, FR-018
 
 ---
 
 ## Edge Case Testing
 
-### Concurrent Edit Detection (FR-024, FR-025, FR-026)
+### Concurrent Edit Detection (FR-021, FR-022, FR-023)
 
-**Steps**:
-1. Open a page for editing in **two browser tabs** (Tab A and Tab B)
-2. In Tab A: Change title to "Modified in Tab A" → Save
-3. In Tab B: Change title to "Modified in Tab B" → Click Save
+**Objective**: Verify warning when multiple users edit the same page.
 
-**Expected Result**:
-- Tab B shows a warning: "This page was modified by [user] at [time]. Your changes will overwrite theirs. Continue?"
-- User can choose to proceed (overwrite) or cancel
+**Steps** (requires two browser sessions):
+1. **Browser A**: Open a page for editing
+2. **Browser B**: Open the same page for editing
+3. **Browser B**: Modify title, save successfully
+4. **Browser A**: Modify body (without refreshing), attempt to save
+5. **Expected**: Warning dialog appears: "Warning: This page was modified by [user] at [time]. Your changes will overwrite theirs. Proceed?"
+6. **Browser A**: Click "Cancel"
+7. **Expected**: Changes not saved, page remains open for editing
+8. **Browser A**: Refresh page to see Browser B's changes
+9. **Browser A**: Make changes again, save
+10. **Expected**: No warning (page is now up-to-date)
 
-### Error Handling with Retry (Clarification Requirement)
-
-**Steps**:
-1. Stop the backend API server (simulate network failure)
-2. Create a new page and click "Save"
-
-**Expected Result**:
-- Error message appears: "Failed to save page. Please check your connection."
-- Form data is **preserved** (title and body are not lost)
-- "Try Again" button is displayed
-3. Restart API server
-4. Click "Try Again"
-
-**Expected Result**:
-- Page saves successfully without re-entering data
+**Acceptance Criteria**: FR-021, FR-022, FR-023
 
 ---
 
-## Accessibility Testing Workflow
+### Error Handling and Recovery (FR-015)
 
-### Automated Testing (axe-core)
+**Objective**: Verify data preservation and retry functionality when operations fail.
 
-Run accessibility scans as part of E2E tests:
+**Steps** (requires simulating API failure):
+1. Create or edit a page with title "Error Test Page" and body content
+2. Simulate API failure (disconnect network or stop backend API)
+3. Attempt to save
+4. **Expected**:
+   - Error message displayed: "Failed to save page. Please try again."
+   - Form data preserved (title and body still filled in)
+   - "Try Again" button visible
+5. Restore API connection
+6. Click "Try Again"
+7. **Expected**: Page saves successfully, no data re-entry required
 
-```bash
-npm run test:e2e
-```
-
-This will run Playwright tests with axe-core integration, checking for WCAG 2.1 Level AA violations.
-
-### Manual Testing Checklist
-
-#### Keyboard Navigation
-- [ ] Tab through all interactive elements in logical order
-- [ ] Shift+Tab navigates backwards
-- [ ] Enter key activates buttons and submits forms
-- [ ] Esc key closes modals
-- [ ] Focus indicators are visible on all interactive elements
-
-#### Screen Reader Testing
-**Using NVDA (Windows) or VoiceOver (Mac)**:
-- [ ] All form labels are read correctly
-- [ ] Error messages are announced when validation fails
-- [ ] Page title and headings are structured correctly (H1, H2, H3)
-- [ ] Button purposes are clear ("Save Page", "Upload Asset", not just "Save", "Upload")
-- [ ] Image assets have alt text or descriptive labels
-
-#### Color Contrast
-- [ ] Use browser DevTools or [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
-- [ ] All text meets 4.5:1 contrast ratio (WCAG AA requirement)
-- [ ] Publication state badges (Published/Scheduled/Unpublished) are distinguishable by more than color alone
+**Acceptance Criteria**: FR-015
 
 ---
 
-## Performance Measurement
+## Accessibility Testing (FR-024)
 
-### Lighthouse CI Integration
+### Keyboard Navigation Test
 
-Run Lighthouse audits locally:
+**Objective**: Verify all functionality accessible via keyboard only.
 
-```bash
-npm run lighthouse
-```
+**Steps**:
+1. Navigate to admin portal
+2. Use **Tab** key to move between interactive elements
+3. Use **Shift+Tab** to move backwards
+4. Use **Enter** to activate buttons and links
+5. Use **Escape** to close modals and dialogs
+6. Use **Arrow keys** to navigate lists and tables
 
-**Target Metrics** (SC-003):
-- First Contentful Paint: < 2 seconds
-- Time to Interactive: < 3 seconds
-- Speed Index: < 3 seconds
+**Expected Results**:
+- All interactive elements reachable via keyboard
+- Focus indicator visible on focused element
+- Modals trap focus (Tab cycles within modal)
+- Escape closes modals and returns focus to trigger element
+- No keyboard traps (can navigate away from all elements)
 
-### Manual Performance Testing
+### Screen Reader Test
 
-1. Open DevTools → Network tab → Throttle to "Fast 3G"
-2. Navigate to Pages list for a site with 20+ pages
-3. Measure: Page load time should be < 3 seconds (p95)
+**Objective**: Verify content announced correctly to screen readers.
+
+**Steps** (use NVDA, JAWS, or VoiceOver):
+1. Navigate through admin portal with screen reader active
+2. **Expected**:
+   - Page title announced on navigation
+   - Form labels announced with inputs
+   - Buttons have descriptive labels
+   - Error messages announced when validation fails
+   - Loading states announced ("Loading pages...")
+   - Success messages announced ("Page saved successfully")
+
+### Automated Accessibility Test
+
+**Steps**:
+1. Open browser DevTools
+2. Run Lighthouse accessibility audit
+3. **Expected**: Score ≥90 (WCAG 2.1 Level AA compliance)
+4. Fix any reported violations
+
+**Acceptance Criteria**: FR-024, SC-008
+
+---
+
+## Performance Testing
+
+### Page Load Performance (SC-003)
+
+**Objective**: Verify p95 page load time <3 seconds.
+
+**Steps**:
+1. Open browser DevTools → Performance tab
+2. Hard refresh page (Ctrl+Shift+R or Cmd+Shift+R)
+3. Record page load time
+4. Repeat 10 times, calculate p95 (95th percentile)
+5. **Expected**: p95 page load time <3 seconds
+
+**Tools**:
+- Chrome DevTools Lighthouse
+- WebPageTest.org
+- Performance tab in DevTools
+
+### Action Feedback Performance (SC-004)
+
+**Objective**: Verify editorial actions provide feedback within 2 seconds.
+
+**Steps**:
+1. Create a page
+2. Measure time from click "Save" to success message displayed
+3. **Expected**: Feedback <2 seconds
+4. Repeat for: update page, delete page, upload asset, create site
+
+**Acceptance Criteria**: SC-003, SC-004
+
+---
+
+## Validation Checklist
+
+Before considering the feature complete, verify:
+
+- [ ] **User Story 1 (Create and Publish a Page)**: All 4 acceptance scenarios pass
+- [ ] **User Story 2 (Upload and Manage Assets)**: All 3 acceptance scenarios pass (including file validation)
+- [ ] **User Story 3 (Create and Edit Sites)**: All 3 acceptance scenarios pass
+- [ ] **Concurrent Edit Detection**: Warning displayed when page modified by another user
+- [ ] **Error Handling**: Data preserved on failure, "Try Again" button works
+- [ ] **Keyboard Navigation**: All functionality accessible via keyboard only
+- [ ] **Screen Reader**: Content announced correctly
+- [ ] **Accessibility Audit**: Lighthouse score ≥90
+- [ ] **Page Load Performance**: p95 <3 seconds
+- [ ] **Action Feedback**: <2 seconds for save/upload operations
+- [ ] **First-Time Task Completion**: 90% success rate (SC-002)
+- [ ] **Task Completion Time**: Create and publish page in <3 minutes (SC-001)
 
 ---
 
 ## Common Issues and Troubleshooting
 
-### Issue: "Failed to fetch" errors on API calls
+### Issue: API Connection Failures
 
-**Solution**: Check that:
-- Backend API is running (`curl http://localhost:5000/health`)
-- `VITE_API_BASE_URL` in `.env.local` is correct
-- CORS is configured on the backend to allow frontend origin
+**Symptoms**: 401 Unauthorized or network errors in console
 
-### Issue: Authentication 401 errors
+**Solutions**:
+- Verify backend API is running (`http://localhost:5000/health`)
+- Check `VITE_API_BASE_URL` in `.env.local`
+- Verify authentication token in `VITE_AUTH_TOKEN` or browser storage
 
-**Solution**:
-- If auth is implemented, verify token is valid: `console.log(localStorage.getItem('authToken'))`
-- Update `VITE_AUTH_TOKEN` in `.env.local`
-- Check that API interceptor is attaching auth headers
+### Issue: File Upload Failures
 
-### Issue: File upload fails with no error message
+**Symptoms**: Upload starts but fails with error
 
-**Solution**:
-- Check file size (must be < 10MB)
-- Check file type (only `image/*`, `application/pdf`, `text/html` allowed)
-- Verify backend endpoint accepts `multipart/form-data`
+**Solutions**:
+- Check file size (<10MB)
+- Verify file type is allowed (JPEG, PNG, GIF, PDF, HTML)
+- Check backend API file upload endpoint is configured correctly
+- Verify storage service is accessible
 
-### Issue: Published date shows wrong timezone
+### Issue: Concurrent Edit Warning Not Appearing
 
-**Solution**:
-- Backend should store dates in UTC
-- Frontend converts to local timezone for display
-- Check browser timezone settings: `Intl.DateTimeFormat().resolvedOptions().timeZone`
+**Symptoms**: No warning when page modified by another user
 
----
+**Solutions**:
+- Verify `VITE_ENABLE_CONCURRENT_EDIT_WARNING=true` in `.env.local`
+- Check `lastModified` timestamp in API response
+- Ensure backend returns updated `lastModified` on every save
 
-## Running Tests
+### Issue: Accessibility Violations
 
-### Unit Tests
+**Symptoms**: Lighthouse accessibility score <90
 
-```bash
-npm run test:unit
-# OR with coverage
-npm run test:unit -- --coverage
-```
-
-### Integration Tests
-
-```bash
-npm run test:integration
-```
-
-### End-to-End Tests
-
-```bash
-# Run all E2E tests
-npm run test:e2e
-
-# Run specific test file
-npm run test:e2e tests/e2e/create-publish-page.spec.ts
-
-# Run in headed mode (see browser)
-npm run test:e2e -- --headed
-
-# Debug mode
-npm run test:e2e -- --debug
-```
-
-### Accessibility Tests
-
-```bash
-npm run test:a11y
-```
-
----
-
-## Deployment Checklist
-
-Before deploying to staging/production:
-
-- [ ] All P1 test scenarios pass
-- [ ] No WCAG 2.1 AA violations in accessibility scan
-- [ ] Lighthouse performance score >= 90
-- [ ] Error handling and retry tested
-- [ ] Concurrent edit warning tested
-- [ ] Backend API has `publishedDate` field on Page entity (**CRITICAL**)
-- [ ] Backend API has page-asset association endpoints (**CRITICAL**)
-- [ ] Environment variables configured for production API URL
-- [ ] Authentication integrated with production auth system
+**Solutions**:
+- Run axe DevTools to identify specific violations
+- Ensure all form inputs have associated labels
+- Verify color contrast meets WCAG AA (4.5:1 for normal text)
+- Add ARIA labels to icon-only buttons
+- Ensure focus indicators are visible
 
 ---
 
 ## Next Steps
 
-After completing quickstart validation:
+After validating all scenarios:
 
-1. Run `/speckit.tasks` to generate implementation tasks
-2. Begin Phase 1: Setup (project scaffolding)
-3. Implement foundational components (API client, routing, auth)
-4. Build features in priority order (P1 user stories 1-4)
+1. **Deploy to staging environment**
+2. **Conduct user acceptance testing** with real content managers
+3. **Measure actual performance** in production environment
+4. **Gather feedback** on usability and task completion
+5. **Iterate** based on feedback and metrics
 
-For questions or issues, refer to:
-- [plan.md](plan.md) - Technical decisions and architecture
-- [data-model.md](data-model.md) - Entity structure and validation rules
-- [research.md](research.md) - Technology choices and alternatives
-- [contracts/](contracts/) - API endpoint specifications
+---
+
+## Notes
+
+- **No Scheduled Publishing**: Pages use simple isPublished boolean (no date-based scheduling)
+- **No Page-Asset Associations**: Assets are independent; content managers manage asset library separately
+- **Draft by Default**: New pages default to `isPublished = false` unless explicitly published
+- **Optimistic Updates**: UI updates immediately; rollback on API failure
+- **Constitution Compliance**: All 5 principles (Reliability, Consistency, Performance, Responsiveness, Maintainability) validated

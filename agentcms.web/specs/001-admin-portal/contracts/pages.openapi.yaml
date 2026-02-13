@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: AgentCMS Admin API - Pages
-  description: Page management endpoints for the AgentCMS Admin Portal with scheduled publishing support
+  description: Page management endpoints for the AgentCMS Admin Portal with simple publish/draft toggle
   version: "1.0"
 
 paths:
@@ -98,7 +98,7 @@ paths:
           description: Server error
     
     put:
-      summary: Update a page
+      summary: Update an existing page
       operationId: updatePage
       tags:
         - Pages
@@ -130,6 +130,10 @@ paths:
                 $ref: '#/components/schemas/PageDto'
         '400':
           description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
         '404':
           description: Page not found
         '500':
@@ -161,156 +165,10 @@ paths:
         '500':
           description: Server error
 
-  /v1/sites/{siteId}/pages/{pageId}/assets:
-    get:
-      summary: List assets associated with a page
-      operationId: listPageAssets
-      tags:
-        - Pages
-        - Assets
-      parameters:
-        - name: siteId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: pageId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AssetDto'
-        '404':
-          description: Page not found
-        '500':
-          description: Server error
-
-  /v1/sites/{siteId}/pages/{pageId}/assets/{assetId}:
-    post:
-      summary: Associate an asset with a page
-      operationId: addPageAsset
-      tags:
-        - Pages
-        - Assets
-      parameters:
-        - name: siteId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: pageId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: assetId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Asset associated successfully
-        '400':
-          description: Invalid request (e.g., asset already associated)
-        '404':
-          description: Page or asset not found
-        '500':
-          description: Server error
-    
-    delete:
-      summary: Remove an asset association from a page
-      operationId: removePageAsset
-      tags:
-        - Pages
-        - Assets
-      parameters:
-        - name: siteId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: pageId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: assetId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Asset association removed successfully
-        '404':
-          description: Page, asset, or association not found
-        '500':
-          description: Server error
-
 components:
   schemas:
     PageDto:
       type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        siteId:
-          type: string
-          format: uuid
-          readOnly: true
-        title:
-          type: string
-          minLength: 1
-          maxLength: 255
-        body:
-          type: string
-          nullable: true
-          description: Page content (plain text or markdown)
-        publishedDate:
-          type: string
-          format: date-time
-          nullable: true
-          description: Publication date for scheduling. Null means unpublished. Future date means scheduled.
-        isPublished:
-          type: boolean
-          readOnly: true
-          description: Computed - true if publishedDate is not null and not in the future
-        createdDate:
-          type: string
-          format: date-time
-          readOnly: true
-        updatedDate:
-          type: string
-          format: date-time
-          readOnly: true
-          description: Last modification timestamp - used for concurrent edit detection
-        createdBy:
-          type: string
-          maxLength: 255
-          nullable: true
-        updatedBy:
-          type: string
-          maxLength: 255
-          nullable: true
       required:
         - id
         - siteId
@@ -318,9 +176,72 @@ components:
         - isPublished
         - createdDate
         - updatedDate
-    
+        - createdBy
+        - updatedBy
+        - lastModified
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the page
+          readOnly: true
+        siteId:
+          type: string
+          format: uuid
+          description: ID of the site this page belongs to
+          readOnly: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Page title
+        body:
+          type: string
+          maxLength: 65535
+          nullable: true
+          description: Page content (plain text or basic formatted text)
+        isPublished:
+          type: boolean
+          description: Publication status (true = published, false = draft)
+        createdDate:
+          type: string
+          format: date-time
+          description: Timestamp when page was created
+          readOnly: true
+        updatedDate:
+          type: string
+          format: date-time
+          description: Timestamp when page was last updated
+          readOnly: true
+        createdBy:
+          type: string
+          description: Username or ID of the user who created the page
+          readOnly: true
+        updatedBy:
+          type: string
+          description: Username or ID of the user who last updated the page
+          readOnly: true
+        lastModified:
+          type: string
+          format: date-time
+          description: Timestamp for concurrent edit detection
+          readOnly: true
+      example:
+        id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        siteId: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        title: "About Us"
+        body: "Welcome to our website. We are a team of passionate developers."
+        isPublished: true
+        createdDate: "2026-02-13T10:30:00Z"
+        updatedDate: "2026-02-13T14:45:00Z"
+        createdBy: "john.doe@example.com"
+        updatedBy: "jane.smith@example.com"
+        lastModified: "2026-02-13T14:45:00Z"
+
     CreatePageDto:
       type: object
+      required:
+        - title
       properties:
         title:
           type: string
@@ -329,21 +250,18 @@ components:
           description: Page title (required)
         body:
           type: string
+          maxLength: 65535
           nullable: true
           description: Page content (optional)
-        publishedDate:
-          type: string
-          format: date-time
-          nullable: true
-          description: Publication date - null for unpublished, now/past for immediate publish, future for scheduled
-        createdBy:
-          type: string
-          maxLength: 255
-          nullable: true
-          description: Username or email of creator
-      required:
-        - title
-    
+        isPublished:
+          type: boolean
+          default: false
+          description: Publication status (defaults to false/draft if not specified)
+      example:
+        title: "New Page Title"
+        body: "This is the page content."
+        isPublished: false
+
     UpdatePageDto:
       type: object
       properties:
@@ -351,73 +269,52 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-          description: Page title (required)
+          description: Page title
         body:
           type: string
+          maxLength: 65535
           nullable: true
-          description: Page content (optional)
-        publishedDate:
-          type: string
-          format: date-time
-          nullable: true
-          description: Publication date - set to null to unpublish
-        updatedBy:
-          type: string
-          maxLength: 255
-          nullable: true
-          description: Username or email of last editor
-      required:
-        - title
-    
-    AssetDto:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        siteId:
-          type: string
-          format: uuid
-          readOnly: true
-        filename:
-          type: string
-        mimeType:
-          type: string
-        url:
-          type: string
-        createdDate:
-          type: string
-          format: date-time
-          readOnly: true
-        createdBy:
-          type: string
-          nullable: true
-      required:
-        - id
-        - siteId
-        - filename
-        - mimeType
-        - url
-        - createdDate
-    
+          description: Page content
+        isPublished:
+          type: boolean
+          description: Publication status
+      example:
+        title: "Updated Page Title"
+        body: "Updated page content."
+        isPublished: true
+
     ProblemDetails:
       type: object
       properties:
         type:
           type: string
-          nullable: true
+          description: A URI reference identifying the problem type
         title:
           type: string
-          nullable: true
+          description: A short, human-readable summary of the problem type
         status:
           type: integer
           format: int32
-          nullable: true
+          description: The HTTP status code
         detail:
           type: string
-          nullable: true
+          description: A human-readable explanation specific to this occurrence of the problem
         instance:
           type: string
-          nullable: true
-      additionalProperties: true
+          description: A URI reference identifying the specific occurrence of the problem
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Validation errors (field name → error messages)
+      example:
+        type: "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+        title: "One or more validation errors occurred."
+        status: 400
+        detail: "See the errors property for details."
+        instance: "/v1/sites/7c9e6679-7425-40de-944b-e07fc1f90ae7/pages"
+        errors:
+          title:
+            - "The title field is required."

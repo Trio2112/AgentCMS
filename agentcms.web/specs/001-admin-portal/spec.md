@@ -3,7 +3,7 @@
 **Feature Branch**: `001-admin-portal`  
 **Created**: February 13, 2026  
 **Status**: Draft  
-**Input**: User description: "The AgentCMS admin portal enables content managers to manage site content (Sites, Pages, Assets) through a focused, intuitive web interface. Primary users are content managers whose top goals are: 1) create and maintain site pages quickly and reliably, 2) manage assets (upload or link images, PDFs, static HTML) and associate them with pages, and 3) schedule and publish content with clear visibility into publication state. The portal must present workflows that let these users complete those goals with minimal training and minimal cognitive friction."
+**Input**: User description: "The AgentCMS admin portal enables content managers to manage site content (Sites, Pages, Assets) through a focused, intuitive web interface. Primary users are content managers whose top goals are: 1) create and maintain site pages quickly and reliably, 2) manage assets (upload or link images, PDFs, static HTML), and 3) publish content with clear visibility into publication state. The portal must present workflows that let these users complete those goals with minimal training and minimal cognitive friction."
 
 ## Clarifications
 
@@ -14,31 +14,33 @@
 - Q: How should the system handle concurrent edits to the same page by multiple managers? → A: Allow concurrent edits; last save wins; warn user before saving if page was modified by someone else since they opened it
 - Q: What authorization model should the admin portal use for content managers? → A: All authenticated content managers have full access to all sites, pages, and assets (no per-site or per-page restrictions)
 - Q: What accessibility standard and conformance level should the admin portal meet? → A: WCAG 2.1 Level AA (mid-level conformance - recommended standard for most web applications)
+- Q: For US1 (Create and Publish a Page), should publishing use scheduled dates or a simple flag? → A: Use a simple yes/no isPublished boolean flag; no need for scheduled publishing or publishedDate field
+- Q: For US3 (Associate Assets with Pages), do content managers need to link assets to specific pages? → A: No, this is no longer a requirement; remove page-asset associations from scope
 
 ## User Scenarios & Testing
 
 ### User Story 1 - Create and Publish a Page (Priority: P1)
 
-A content manager needs to create a new page with a title and body content, then publish it immediately or schedule it for future publication. The manager must see clear confirmation that the page is published and understand its current publication state.
+A content manager needs to create a new page with a title and body content, then set a publish flag to make it visible. The manager must see clear confirmation that the page is published and understand its current publication state.
 
 **Why this priority**: This is the core value proposition of the admin portal - enabling content managers to create and publish pages. Without this capability, the portal has no minimum viable function.
 
-**Independent Test**: Can be fully tested by creating a page record, setting a published date, and verifying the isPublished state reflects the scheduling logic. Delivers immediate value as a standalone content creation and publishing tool.
+**Independent Test**: Can be fully tested by creating a page record, toggling the isPublished flag, and verifying the publication state. Delivers immediate value as a standalone content creation and publishing tool.
 
 **Acceptance Scenarios**:
 
-1. **Given** the manager is on the page creation screen, **When** they enter a title, body, and set a published date to today's date or earlier, **Then** the page is saved with isPublished = true and appears as published
-2. **Given** the manager is editing an existing page, **When** they set the published date to a future date, **Then** the page is saved with isPublished = false and shows as scheduled
-3. **Given** the manager is editing a published page, **When** they clear the published date field, **Then** the page is unpublished (isPublished = false) and no longer visible to site visitors
-4. **Given** the manager has saved a page, **When** they view the page details, **Then** they see title, body, published date (or "Not Published"), isPublished status, and created/updated timestamps with createdBy/updatedBy metadata
+1. **Given** the manager is on the page creation screen, **When** they enter a title and body, **Then** the page is saved with isPublished = false (draft) by default
+2. **Given** the manager has created a draft page, **When** they set isPublished = true, **Then** the page is published and visible to site visitors
+3. **Given** the manager is editing a published page, **When** they set isPublished = false, **Then** the page is unpublished (draft) and no longer visible to site visitors
+4. **Given** the manager has saved a page, **When** they view the page details, **Then** they see title, body, isPublished status (Published/Draft), and created/updated timestamps with createdBy/updatedBy metadata
 
 ---
 
 ### User Story 2 - Upload and Manage Assets (Priority: P1)
 
-A content manager needs to add images or documents to the system by uploading files or providing URLs, then view and manage these assets to use them in pages.
+A content manager needs to add images or documents to the system by uploading files or providing URLs, then view and manage these assets.
 
-**Why this priority**: Assets are essential for rich content creation. Content managers need to upload images and documents as part of their page authoring workflow. This story is independently testable and valuable without requiring page associations.
+**Why this priority**: Assets are essential for rich content creation. Content managers need to upload images and documents as part of their content management workflow. This story is independently testable and delivers standalone asset library functionality.
 
 **Independent Test**: Can be tested by uploading a file via file picker, creating an asset from a URL, and viewing the asset list with filename, MIME type, URL, createdDate, and createdBy. Delivers standalone asset library functionality.
 
@@ -50,23 +52,7 @@ A content manager needs to add images or documents to the system by uploading fi
 
 ---
 
-### User Story 3 - Associate Assets with Pages (Priority: P1)
-
-A content manager needs to link uploaded assets (images, PDFs) to specific pages so those assets are available when the page is rendered or referenced.
-
-**Why this priority**: This completes the basic content authoring workflow by connecting assets to pages. While technically dependent on Stories 1 and 2, it represents a distinct, testable capability required for a complete P1 feature set.
-
-**Independent Test**: Can be tested by selecting a page, choosing one or more assets from the asset library, and verifying the association is saved and displayed. Delivers the ability to build complete pages with media.
-
-**Acceptance Scenarios**:
-
-1. **Given** a page exists and assets are available, **When** the manager associates one or more assets with the page, **Then** the associations are saved and visible when viewing the page details
-2. **Given** a page has associated assets, **When** the manager removes an asset association, **Then** the asset is disassociated from the page but remains in the asset library
-3. **Given** the manager is editing a page, **When** they view associated assets, **Then** they see each asset's filename, MIME type, and URL to confirm the correct associations
-
----
-
-### User Story 4 - Create and Edit Sites (Priority: P1)
+### User Story 3 - Create and Edit Sites (Priority: P1)
 
 A content manager needs to create site records with a name and description, and edit these properties to organize pages and assets under logical site groupings.
 
@@ -86,10 +72,8 @@ A content manager needs to create site records with a name and description, and 
 
 - What happens when a manager tries to create a page without a required title?
 - How does the system handle uploading a file with an unsupported or unrecognized MIME type?
-- What happens when a manager sets a published date to a past date on an unpublished page?
 - How does the system handle a manager attempting to upload a file that exceeds size limits?
 - What happens when a manager tries to create a site without a name?
-- How does the system behave if a manager clears the published date on a page that is already unpublished?
 - What happens when a manager provides an invalid or unreachable URL when creating an asset?
 - How does the system handle concurrent edits to the same page by multiple managers?
 
@@ -113,17 +97,15 @@ When multiple managers edit the same page:
 
 ### Functional Requirements
 
-- **FR-001**: System MUST allow content managers to create page records with a required title, optional body, and optional published date
-- **FR-002**: System MUST compute and display isPublished status based on published date (true if published date is set and not in the future, false otherwise)
-- **FR-003**: System MUST allow content managers to clear the published date on a page, resulting in isPublished = false
-- **FR-004**: System MUST display page metadata including id (read-only), siteId (read-only), title, body, published date, isPublished, createdDate, updatedDate, createdBy, and updatedBy
+- **FR-001**: System MUST allow content managers to create page records with a required title, optional body, and isPublished boolean flag
+- **FR-002**: System MUST allow content managers to toggle the isPublished flag to control page visibility (true = published, false = draft)
+- **FR-003**: System MUST allow content managers to unpublish a page by setting isPublished = false
+- **FR-004**: System MUST display page metadata including id (read-only), siteId (read-only), title, body, isPublished, createdDate, updatedDate, createdBy, and updatedBy
 - **FR-005**: System MUST allow content managers to upload files (images, PDFs, static HTML) to create asset records
 - **FR-006**: System MUST allow content managers to create asset records by providing a URL
 - **FR-007**: System MUST detect and store the MIME type of uploaded files
 - **FR-008**: System MUST display asset metadata including id (read-only), siteId (read-only), filename, MIME type, URL, createdDate, and createdBy
-- **FR-009**: System MUST allow content managers to associate one or more assets with a page
-- **FR-010**: System MUST allow content managers to remove asset associations from a page without deleting the asset
-- **FR-011**: System MUST allow content managers to create site records with a required name and optional description
+- **FR-009**: System MUST allow content managers to create site records with a required name and optional description
 - **FR-012**: System MUST allow content managers to edit site name and description
 - **FR-013**: System MUST display site metadata including id (read-only), name, and description
 - **FR-014**: System MUST record createdBy and updatedBy metadata when pages are created or modified
@@ -131,21 +113,20 @@ When multiple managers edit the same page:
 - **FR-016**: System MUST record createdDate and createdBy metadata for assets
 - **FR-017**: System MUST provide clear, immediate feedback when save, publish, or upload actions succeed or fail
 - **FR-018**: System MUST present uniform interaction patterns across Sites, Pages, and Assets interfaces
-- **FR-019**: System MUST validate that page title is provided before saving
-- **FR-020**: System MUST validate that site name is provided before saving
-- **FR-021**: System MUST allow scheduled publishing by accepting future dates in the published date field
-- **FR-022**: System MUST validate file size and MIME type before initiating file upload
-- **FR-023**: System MUST reject files that exceed size limits or have unsupported MIME types immediately with a specific error message before upload begins
-- **FR-024**: System MUST allow concurrent editing of the same page by multiple managers
-- **FR-025**: System MUST detect when a page has been modified by another user since the current user opened it for editing
-- **FR-026**: System MUST warn the user before saving if another user has modified the page, displaying who made changes and when, and allow the user to proceed or cancel
-- **FR-027**: System MUST conform to WCAG 2.1 Level AA accessibility standards for all user interfaces (Sites, Pages, Assets screens)
+- **FR-017**: System MUST validate that page title is provided before saving
+- **FR-018**: System MUST validate that site name is provided before saving
+- **FR-019**: System MUST validate file size and MIME type before initiating file upload
+- **FR-020**: System MUST reject files that exceed size limits or have unsupported MIME types immediately with a specific error message before upload begins
+- **FR-021**: System MUST allow concurrent editing of the same page by multiple managers
+- **FR-022**: System MUST detect when a page has been modified by another user since the current user opened it for editing
+- **FR-023**: System MUST warn the user before saving if another user has modified the page, displaying who made changes and when, and allow the user to proceed or cancel
+- **FR-024**: System MUST conform to WCAG 2.1 Level AA accessibility standards for all user interfaces (Sites, Pages, Assets screens)
 
 ### Key Entities
 
 - **Site**: Represents a logical grouping of pages and assets. Key attributes: unique identifier, name (required), description (optional). A site contains multiple pages and assets.
-- **Page**: Represents a content page within a site. Key attributes: unique identifier, site identifier, title (required), body content (optional), published date (nullable, used for scheduling), computed isPublished flag, creation/update timestamps, creation/update user metadata. A page can have multiple associated assets.
-- **Asset**: Represents an uploaded file or linked external resource. Key attributes: unique identifier, site identifier, filename, MIME type, storage or external URL, creation timestamp, creation user metadata. An asset can be associated with multiple pages.
+- **Page**: Represents a content page within a site. Key attributes: unique identifier, site identifier, title (required), body content (optional), isPublished boolean flag, creation/update timestamps, creation/update user metadata.
+- **Asset**: Represents an uploaded file or linked external resource. Key attributes: unique identifier, site identifier, filename, MIME type, storage or external URL, creation timestamp, creation user metadata.
 
 ## Success Criteria
 
@@ -155,9 +136,9 @@ When multiple managers edit the same page:
 - **SC-002**: First-time users can complete a core P1 task (create and publish a page) with a task completion rate of 90%
 - **SC-003**: Page load performance for editorial pages meets a p95 page load time of under 3 seconds measured in realistic network conditions
 - **SC-004**: Editorial actions (save, publish, upload) provide feedback to the user within 2 seconds under normal operating conditions
-- **SC-005**: Publication state changes (scheduled vs. published vs. unpublished) are unambiguous and visible to content managers immediately after action
+- **SC-005**: Publication state changes (published vs. draft) are unambiguous and visible to content managers immediately after action
 - **SC-006**: Asset upload and URL linking operations complete successfully for supported file types and valid URLs with a success rate above 95%
-- **SC-007**: Content managers can upload an asset and associate it with a page in under 2 minutes
+- **SC-007**: Content managers can upload an asset in under 2 minutes
 - **SC-008**: All user interfaces conform to WCAG 2.1 Level AA standards as validated by automated accessibility testing tools and manual keyboard navigation testing
 
 ### Validation Approach
@@ -177,8 +158,8 @@ When multiple managers edit the same page:
 - Content managers have appropriate authentication credentials to access the admin portal (authentication mechanism is out of scope for this spec)
 - Asset storage and delivery infrastructure exists or will be provided (implementation detail for Plan phase)
 - The system supports standard web file upload mechanisms for assets
-- Publication state (isPublished) is computed based on the published date being set and not in the future; no separate manual toggle is needed
-- "Unpublishing" a page is accomplished by clearing the published date, not by deleting the page
+- Publication state (isPublished) is a simple boolean flag that content managers toggle directly
+- "Unpublishing" a page is accomplished by setting isPublished = false, not by deleting the page
 - Asset file size limits and supported MIME types are determined by product and infrastructure teams; the portal will enforce those limits (specific limits are implementation details)
 - The portal is for authenticated internal users (content managers); public-facing site rendering is out of scope
 - Localization, versioning, rollback, and advanced governance workflows are explicitly out of scope and deferred to future features
@@ -203,7 +184,6 @@ When multiple managers edit the same page:
 - Authentication and authorization system must be in place to control access to the admin portal
 - Asset storage infrastructure (file storage service or external URL validation) must be available
 - Database or data persistence layer must support the Site, Page, and Asset entities with required fields
-- The system must have a mechanism to determine "current date/time" for evaluating scheduled publishing logic
 
 ## Open Questions
 

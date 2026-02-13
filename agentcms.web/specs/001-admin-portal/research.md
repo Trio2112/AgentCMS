@@ -4,27 +4,23 @@
 **Date**: February 13, 2026  
 **Purpose**: Document technology choices, alternatives considered, and best practices for admin portal implementation
 
+**Scope Note**: This feature uses simplified publishing (boolean flag, no scheduled dates) and independent asset management (no page-asset associations).
+
 ## 1. Frontend Framework Selection
 
 ### Decision: React 18.2+ with TypeScript
 
 **Rationale**:
-- **Type Safety**: TypeScript provides compile-time type checking for API contracts, reducing runtime errors and improving maintainability (Constitution: Maintainability)
-- **Ecosystem Maturity**: React has extensive libraries for admin UIs (tables, forms, date pickers) and excellent accessibility tooling (react-aria, Radix UI)
-- **Team Familiarity**: React is industry-standard with abundant documentation and talent pool
-- **Performance**: React 18's concurrent rendering and automatic batching support the <2s action feedback requirement (SC-004)
-- **Testing**: Rich testing ecosystem (React Testing Library, Vitest, Playwright) aligns with Constitution requirement for maintainability
+- **Type Safety**: TypeScript provides compile-time type checking for API contracts, reducing runtime errors
+- **Ecosystem Maturity**: React has extensive libraries for admin UIs and excellent accessibility tooling
+- **Performance**: React 18's concurrent rendering supports the <2s action feedback requirement
+- **Testing**: Rich testing ecosystem (React Testing Library, Vitest, Playwright)
 
 **Alternatives Considered**:
-- **Vue 3**: Comparable capabilities but smaller ecosystem for enterprise admin panels; less TypeScript-first
-- **Svelte**: Excellent performance but smaller library ecosystem, fewer accessibility-focused component libraries
-- **Angular**: Over-engineered for this scope; heavy framework not needed for focused admin portal
-- **Vanilla JS**: Would require building all components from scratch, violating Constitution principle of maintainability
-
-**Supporting Research**:
-- React 18 best practices: [React.dev Documentation](https://react.dev/)
-- Admin panel patterns: Material-UI, Ant Design, Chakra UI component libraries provide proven patterns
-- WCAG 2.1 AA in React: React-ARIA provides accessible primitives; Radix UI has built-in accessibility
+- **Vue 3**: Smaller ecosystem for enterprise admin panels
+- **Svelte**: Smaller library ecosystem, fewer accessibility-focused components
+- **Angular**: Over-engineered for this scope
+- **Vanilla JS**: Violates maintainability principle
 
 ---
 
@@ -33,455 +29,331 @@
 ### Decision: TanStack Query (React Query) + Local Component State
 
 **Rationale**:
-- **Server State Separation**: TanStack Query handles API data fetching, caching, and synchronization—matches our API-backed architecture
+- **Server State Separation**: TanStack Query handles API data fetching, caching, and synchronization
 - **Optimistic Updates**: Built-in support for optimistic UI updates (Constitution: Responsiveness)
-- **Error Handling**: Automatic retry logic with exponential backoff aligns with "Try Again" requirement from clarifications
-- **Performance**: Intelligent caching reduces unnecessary API calls, supporting <3s page load goal (SC-003)
-- **Simplicity**: No need for Redux/Zustand for simple UI state (form inputs, modals); local component state sufficient
-
-**Alternatives Considered**:
-- **Redux Toolkit**: Over-engineered for this scope; adds boilerplate for server state that TanStack Query handles better
-- **Zustand**: Good for global UI state but doesn't solve server state management; would still need TanStack Query
-- **Context API only**: Insufficient for complex async state, caching, and optimistic updates; poor performance at scale
-- **Apollo Client**: GraphQL-specific; existing API is REST, would require backend changes
+- **Error Handling**: Automatic retry logic with exponential backoff
+- **Performance**: Intelligent caching reduces unnecessary API calls
+- **Simplicity**: No need for Redux/Zustand for simple UI state
 
 **Implementation Pattern**:
 ```typescript
-// TanStack Query for server state
-const { data: pages, isLoading } = useQuery(['pages', siteId], () => fetchPages(siteId))
-
-// Local state for form inputs
-const [title, setTitle] = useState('')
-
-// Mutations with optimistic updates
-const mutation = useMutation(createPage, {
-  onMutate: async (newPage) => {
-    // Optimistic update: add to list immediately
-    await queryClient.cancelQueries(['pages', siteId])
-    const previous = queryClient.getQueryData(['pages', siteId])
-    queryClient.setQueryData(['pages', siteId], (old) => [...old, newPage])
-    return { previous }
-  },
-  onError: (err, newPage, context) => {
-    // Rollback on error, show retry option
-    queryClient.setQueryData(['pages', siteId], context.previous)
-  }
-})
-```
-
----
-
-## 3. Form Handling Strategy
-
-### Decision: Controlled Components with Zod Validation
-
-**Rationale**:
-- **Controlled Components**: React's native form handling keeps form state in sync with component state; simple, predictable
-- **Zod**: TypeScript-first validation library generates both runtime validation and TypeScript types from single schema
-- **Client-Side Validation**: Required for FR-022 (validate file before upload) and FR-019/FR-020 (required field validation)
-- **Error Preservation**: Controlled components naturally preserve form data on validation errors (clarification requirement)
-
-**Alternatives Considered**:
-- **React Hook Form**: Excellent library but adds dependency; overkill for simple forms in this app (4 entity types with 2-4 fields each)
-- **Formik**: Mature but heavier than needed; slower updates compared to controlled components
-- **Uncontrolled Components**: Don't integrate well with React Query optimistic updates; harder to preserve state on errors
-- **Yup Validation**: Less TypeScript-native than Zod; Zod's type inference is superior
-
-**Validation Example**:
-```typescript
-import { z } from 'zod'
-
-const PageSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(255),
-  body: z.string().optional(),
-  publishedDate: z.date().nullable(),
-})
-
-type PageFormData = z.infer<typeof PageSchema>
-
-// In component:
-const handleSubmit = (data: PageFormData) => {
-  const result = PageSchema.safeParse(data)
-  if (!result.success) {
-    setErrors(result.error.flatten())
-    return
-  }
-  mutation.mutate(result.data)
-}
-```
-
----
-
-## 4. File Upload Implementation
-
-### Decision: Client-Side Validation + Direct Multipart POST to API
-
-**Rationale**:
-- **FR-022/FR-023 Requirement**: Must validate file size and MIME type *before* upload starts
-- **Simplicity**: Direct POST to API avoids complexity of presigned URLs or separate storage service
-- **Existing API**: Swagger.json shows `/v1/sites/{siteId}/assets` endpoint likely accepts multipart uploads
-- **Error Handling**: Immediate rejection on client side (before network round-trip) provides fast feedback per Constitution: Responsiveness
-
-**Validation Logic**:
-```typescript
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/html']
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-
-const validateFile = (file: File): ValidationResult => {
-  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    return { valid: false, error: `Unsupported file type: ${file.type}` }
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: `File exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)` }
-  }
-  return { valid: true }
-}
-```
-
-**Alternatives Considered**:
-- **Presigned URLs (S3/Azure Blob)**: More scalable for large files but adds complexity; existing API doesn't indicate this pattern
-- **Chunked Upload**: Overkill for 10MB limit; adds complexity without clear benefit
-- **Server-Side Only Validation**: Would waste bandwidth and time uploading invalid files (violates FR-022)
-
-**Upload Progress**:
-- Use Axios progress events to show upload progress bar
-- Optimistic UI: show file in list immediately, mark as "uploading", update on success/failure
-
----
-
-## 5. Authentication Integration
-
-### Decision: Detect and Integrate with Existing Auth System
-
-**Rationale**:
-- **Assumption from Spec**: "Content managers have appropriate authentication credentials" (Assumptions section)
-- **Out of Scope**: "authentication mechanism is out of scope for this spec" (Assumptions section)
-- **Pragmatic Approach**: Frontend assumes API enforces auth via HTTP headers (JWT Bearer token or session cookie)
-
-**Implementation Strategy**:
-1. **Discovery Phase**: Check if existing API uses:
-   - Bearer token (Authorization: Bearer <token>)
-   - Session cookies (HttpOnly cookie-based auth)
-   - API key headers
-2. **Axios Interceptor**: Attach auth credentials to all requests
-3. **Error Handling**: 401 responses redirect to login page (or show auth error if no login UI in scope)
-
-```typescript
-// api/client.ts
-import axios from 'axios'
-
-const apiClient = axios.create({
-  baseURL: process.env.VITE_API_BASE_URL || 'http://localhost:5000',
-})
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken') // or detect cookie
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Redirect to login or show auth modal
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
-)
-```
-
-**Note**: If auth system is undefined, frontend can proceed with placeholder ("all managers have access" per clarification) and integrate auth later without major refactoring.
-
----
-
-## 6. Accessibility Testing Toolchain
-
-### Decision: axe-core + Playwright + Manual Testing Checklist
-
-**Rationale**:
-- **FR-027**: Must conform to WCAG 2.1 Level AA
-- **SC-008**: Validated via automated tools and manual keyboard navigation
-- **axe-core**: Industry-standard accessibility testing library; catches 57% of WCAG issues automatically
-- **Playwright Integration**: axe-core runs in E2E tests, ensuring regression prevention
-- **Manual Checklist**: Required for remaining 43% of issues (keyboard nav, screen reader compatibility, focus management)
-
-**Toolchain Components**:
-1. **Development**: axe DevTools browser extension for real-time feedback
-2. **CI/CD**: @axe-core/playwright integration runs accessibility scans on every commit
-3. **Manual Testing**: Keyboard-only navigation checklist + screen reader testing (NVDA/JAWS on Windows, VoiceOver on Mac)
-
-**Implementation**:
-```typescript
-// tests/e2e/accessibility.spec.ts
-import { test, expect } from '@playwright/test'
-import AxeBuilder from '@axe-core/playwright'
-
-test('Page creation form is accessible', async ({ page }) => {
-  await page.goto('/sites/123/pages/new')
+// Publish page with optimistic update
+function usePublishPage() {
+  const queryClient = useQueryClient()
   
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze()
-  
-  expect(accessibilityScanResults.violations).toEqual([])
-})
-```
-
-**Accessibility Patterns**:
-- Semantic HTML (nav, main, article, section) for screen reader landmarks
-- ARIA labels on icon buttons and interactive elements
-- Focus management on modal open/close
-- Skip links for keyboard navigation
-- Color contrast ratios >= 4.5:1 (WCAG AA requirement)
-- Form error messages associated with inputs via aria-describedby
-
----
-
-## 7. CI/CD Integration
-
-### Decision: GitHub Actions with Vitest, Playwright, Lighthouse CI
-
-**Rationale**:
-- **GitHub Actions**: Likely existing CI system if repository is on GitHub; otherwise adaptable to GitLab CI, Azure DevOps
-- **Vitest**: Fast unit test runner, 10x faster than Jest for modern projects
-- **Playwright**: Cross-browser E2E testing (Chromium, Firefox, WebKit) ensures compatibility
-- **Lighthouse CI**: Automated performance audits enforce SC-003 (p95 <3s page load)
-
-**Pipeline Structure**:
-```yaml
-name: Admin Portal CI
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: 'npm'
+  return useMutation({
+    mutationFn: (pageId: string, isPublished: boolean) => 
+      api.pages.update(pageId, { isPublished }),
+    onMutate: async ({ pageId, isPublished }) => {
+      await queryClient.cancelQueries({ queryKey: ['pages'] })
+      const previousPages = queryClient.getQueryData(['pages'])
       
-      - name: Install dependencies
-        run: npm ci
+      queryClient.setQueryData(['pages'], (old: Page[]) =>
+        old.map(p => p.id === pageId ? { ...p, isPublished } : p)
+      )
       
-      - name: Run unit tests
-        run: npm run test:unit
-      
-      - name: Run E2E tests
-        run: npm run test:e2e
-      
-      - name: Run Lighthouse CI
-        run: npm run lighthouse
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-```
-
-**Performance Budgets** (Lighthouse CI config):
-```json
-{
-  "ci": {
-    "assert": {
-      "preset": "lighthouse:recommended",
-      "assertions": {
-        "first-contentful-paint": ["error", {"maxNumericValue": 2000}],
-        "interactive": ["error", {"maxNumericValue": 3000}],
-        "speed-index": ["error", {"maxNumericValue": 3000}]
-      }
-    }
-  }
-}
-```
-
----
-
-## 8. API Modification Requirements (publishedDate Field)
-
-### Problem: Missing `publishedDate` Field in Existing API
-
-**Current API State** (per agentcms.api-swagger.json):
-- `PageDto` has `isPublished: boolean` but no `publishedDate` field
-- Cannot implement scheduled publishing (FR-021) without API change
-
-**Required API Changes**:
-
-#### Option A: Add publishedDate to Page Entity (Recommended)
-```json
-{
-  "PageDto": {
-    "properties": {
-      "publishedDate": {
-        "type": "string",
-        "format": "date-time",
-        "nullable": true,
-        "description": "Publication date. If null, page is unpublished. If future date, page is scheduled."
-      },
-      "isPublished": {
-        "type": "boolean",
-        "readOnly": true,
-        "description": "Computed: publishedDate != null && publishedDate <= now()"
-      }
-    }
-  }
-}
-```
-
-**Backend Implementation**:
-- Add `PublishedDate` column to Pages table (nullable DateTime)
-- Compute `IsPublished` property: `get => PublishedDate.HasValue && PublishedDate.Value <= DateTime.UtcNow`
-- Update `CreatePageDto` and `UpdatePageDto` to accept `PublishedDate?` (remove `IsPublished` from input DTOs)
-
-#### Option B: Interim Solution (Toggle-Only Publishing)
-If API changes are blocked/delayed:
-- Use existing `isPublished` boolean for immediate publish/unpublish only
-- Implement scheduling in Phase 2 after API is updated
-- Frontend shows "Publish Now" / "Unpublish" buttons instead of date picker
-
-**Recommendation**: Prioritize Option A (API update) as Phase 2 foundational task before implementing User Story 1. Scheduling is core to spec requirements (FR-021, SC-005).
-
----
-
-## 9. Concurrent Edit Detection Strategy
-
-### Decision: Use `updatedDate` Timestamp Comparison
-
-**Rationale**:
-- **API Support**: PageDto already has `updatedDate` field (per swagger.json)
-- **Simple Implementation**: When user opens page for editing, store `updatedDate`. Before saving, fetch current `updatedDate` and compare.
-- **No ETag Required**: Avoids need for API to support ETags/If-Match headers
-
-**Frontend Implementation**:
-```typescript
-const PageEditForm = ({ pageId }) => {
-  const { data: page } = useQuery(['page', pageId], () => fetchPage(pageId))
-  const [originalUpdatedDate, setOriginalUpdatedDate] = useState(page.updatedDate)
-
-  const mutation = useMutation(updatePage, {
-    onMutate: async (updatedData) => {
-      // Before saving, check if page was modified by someone else
-      const currentPage = await fetchPage(pageId)
-      if (currentPage.updatedDate !== originalUpdatedDate) {
-        const confirmed = window.confirm(
-          `This page was modified by ${currentPage.updatedBy} at ${currentPage.updatedDate}. ` +
-          `Your changes will overwrite theirs. Continue?`
-        )
-        if (!confirmed) {
-          throw new Error('Save cancelled by user')
-        }
-      }
-      return updatedData
-    }
+      return { previousPages }
+    },
+    onError: (err, vars, context) => {
+      queryClient.setQueryData(['pages'], context.previousPages)
+    },
   })
 }
 ```
 
-**Alternatives**:
-- **ETags**: More robust but requires API to implement ETag generation and If-Match header validation
-- **Pessimistic Locking**: Would require lock/unlock API endpoints; violates clarification decision (allow concurrent edits)
-- **Operational Transforms**: Over-engineered for this use case; no real-time collaboration requirement
-
 ---
 
-## 10. Date/Time Handling for Scheduling
+## 3. Form Validation Strategy
 
-### Decision: date-fns + UTC Storage, Local Display
+### Decision: Zod + React Hook Form
 
 **Rationale**:
-- **date-fns**: Modern, tree-shakeable, better TypeScript support than Moment.js
-- **UTC Storage**: API stores all dates in UTC (standard practice)
-- **Local Display**: Show scheduled times in user's local timezone with explicit indication
+- **TypeScript-First**: Zod schemas generate TypeScript types automatically
+- **Runtime Validation**: Client-side validation before API submission
+- **File Upload Validation**: Perfect for validating file size, MIME type before upload
+- **React Hook Form Integration**: Seamless integration via `@hookform/resolvers`
 
-**Implementation**:
+**Implementation Pattern**:
 ```typescript
-import { format, parseISO, isPast } from 'date-fns'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
-const isPublished = (publishedDate: string | null): boolean => {
-  if (!publishedDate) return false
-  return isPast(parseISO(publishedDate))
-}
+const pageSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  body: z.string().optional(),
+  isPublished: z.boolean(),
+})
 
-const formatPublishDate = (publishedDate: string | null): string => {
-  if (!publishedDate) return 'Not Published'
-  const date = parseISO(publishedDate)
-  if (isPast(date)) return `Published ${format(date, 'MMM d, yyyy h:mm a')}`
-  return `Scheduled for ${format(date, 'MMM d, yyyy h:mm a')}`
+type PageFormData = z.infer<typeof pageSchema>
+
+function PageForm() {
+  const { register, handleSubmit, formState: { errors } } = useForm<PageFormData>({
+    resolver: zodResolver(pageSchema),
+  })
+  
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('title')} />
+      {errors.title && <span>{errors.title.message}</span>}
+      <label>
+        <input type="checkbox" {...register('isPublished')} />
+        Publish
+      </label>
+    </form>
+  )
 }
 ```
 
-**UI Component**:
-- Use native `<input type="datetime-local">` for date picker (built-in validation, accessibility)
-- Convert to/from ISO 8601 UTC strings for API communication
-- Display warning if user selects past date on new page ("This page will be published immediately")
+---
+
+## 4. File Upload Validation
+
+### Decision: Client-Side Pre-Flight Validation with Zod
+
+**Rationale**:
+- **Immediate Feedback**: Validate file size and MIME type before upload begins (FR-019, FR-020)
+- **UX Requirement**: "reject immediately with specific message if invalid"
+- **Cost Savings**: Prevents unnecessary upload bandwidth for invalid files
+
+**Implementation Pattern**:
+```typescript
+const MAX_FILE_SIZE_MB = 10
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/html']
+
+const fileSchema = z.object({
+  file: z
+    .instanceof(File)
+    .refine((file) => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024, 
+      `File size must be less than ${MAX_FILE_SIZE_MB}MB`)
+    .refine((file) => ALLOWED_MIME_TYPES.includes(file.type),
+      'File type not supported. Allowed: JPEG, PNG, GIF, PDF, HTML'),
+})
+
+function AssetUpload() {
+  const handleFile = (file: File) => {
+    const result = fileSchema.safeParse({ file })
+    
+    if (!result.success) {
+      toast.error(result.error.errors[0].message)
+      return
+    }
+    
+    uploadAsset(file)
+  }
+}
+```
 
 ---
 
-## 11. Table/List Pagination and Filtering
+## 5. Concurrent Edit Detection
 
-### Decision: Server-Side Pagination + Client-Side Filtering (Hybrid)
+### Decision: Optimistic Locking with `lastModified` Timestamp
 
 **Rationale**:
-- **Performance**: Client-side filtering acceptable for typical admin workload (<1000 items per entity type)
-- **API Constraints**: Existing API may not support query parameters for filtering (not visible in swagger.json)
-- **Future-Proof**: If scale grows, can migrate to server-side filtering without UI changes
+- **Last Save Wins**: Matches clarification requirement
+- **Warning Before Overwrite**: Detect if page modified since current user opened it
+- **Simple Implementation**: Compare timestamps, no complex distributed locks
+- **User Control**: Warning gives user choice to proceed or cancel
+
+**Implementation Pattern**:
+```typescript
+interface Page {
+  id: string
+  title: string
+  isPublished: boolean
+  lastModified: string
+  updatedBy: string
+}
+
+function PageForm({ page }: { page: Page }) {
+  const [originalLastModified] = useState(page.lastModified)
+  
+  const updateMutation = useMutation({
+    mutationFn: (data: PageFormData) => api.pages.update(page.id, data),
+    onMutate: async () => {
+      const current = await api.pages.get(page.id)
+      
+      if (current.lastModified !== originalLastModified) {
+        const proceed = await confirm(
+          `Warning: Modified by ${current.updatedBy}. Proceed?`
+        )
+        if (!proceed) throw new Error('User cancelled')
+      }
+    },
+  })
+}
+```
+
+---
+
+## 6. Accessibility Implementation (WCAG 2.1 Level AA)
+
+### Decision: axe-core + React-ARIA/Radix UI + Manual Testing
+
+**Rationale**:
+- **Automated Testing**: axe-core catches ~57% of accessibility issues
+- **Accessible Primitives**: React-ARIA and Radix UI provide WCAG-compliant components
+- **Manual Testing**: Keyboard navigation and screen reader testing for remaining issues
+
+**Implementation Checklist**:
+- Keyboard Navigation: Tab order, Escape to close, Enter to submit
+- Screen Reader Support: ARIA labels, roles, live regions
+- Focus Management: Focus trap in modals
+- Color Contrast: WCAG AA requires 4.5:1 for normal text
+- Form Labels: All inputs have associated labels
+- Error Identification: Errors announced to screen readers
+
+**Testing Integration**:
+```typescript
+import { render } from '@testing-library/react'
+import { axe, toHaveNoViolations } from 'jest-axe'
+
+expect.extend(toHaveNoViolations)
+
+test('PageForm has no accessibility violations', async () => {
+  const { container } = render(<PageForm />)
+  const results = await axe(container)
+  expect(results).toHaveNoViolations()
+})
+```
+
+---
+
+## 7. Performance Optimization Strategies
+
+### Decision: Code Splitting + Virtualization + TanStack Query Caching
+
+**Rationale**:
+- **<3s Page Load**: Code splitting reduces initial bundle size
+- **Large Lists**: Virtualization prevents DOM bloat for >50 items
+- **Cache Strategy**: TanStack Query reduces redundant API calls
 
 **Implementation**:
 ```typescript
-const SiteList = () => {
-  const { data: sites } = useQuery(['sites'], fetchAllSites)
-  const [searchTerm, setSearchTerm] = useState('')
+// Code splitting with React.lazy()
+import { lazy, Suspense } from 'react'
 
-  const filteredSites = useMemo(() => {
-    return sites?.filter(site => 
-      site.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) ?? []
-  }, [sites, searchTerm])
+const PagesPage = lazy(() => import('./features/pages/components/PagesPage'))
+const AssetsPage = lazy(() => import('./features/assets/components/AssetsPage'))
 
+// Virtualized list for large datasets
+import { useVirtualizer } from '@tanstack/react-virtual'
+
+function PagesList({ pages }: { pages: Page[] }) {
+  const parentRef = useRef<HTMLDivElement>(null)
+  
+  const virtualizer = useVirtualizer({
+    count: pages.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 50,
+  })
+  
   return (
-    <div>
-      <input 
-        type="search" 
-        value={searchTerm} 
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Search sites..."
-      />
-      <table>
-        {filteredSites.map(site => <SiteRow key={site.id} site={site} />)}
-      </table>
+    <div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}>
+      <div style={{ height: virtualizer.getTotalSize() }}>
+        {virtualizer.getVirtualItems().map((item) => (
+          <div key={item.index}>{pages[item.index].title}</div>
+        ))}
+      </div>
     </div>
   )
 }
 ```
 
-**Pagination** (if needed later):
-- Use TanStack Query's infinite scroll capability for large lists
-- OR add server-side pagination query params: `?page=1&pageSize=50`
+---
+
+## 8. Build Tool Selection
+
+### Decision: Vite
+
+**Rationale**:
+- **Fast HMR**: Near-instant hot module replacement during development
+- **Modern Defaults**: ESM, TypeScript, JSX support out of the box
+- **Optimized Builds**: Rollup-based production builds with tree-shaking
+- **Simple Configuration**: Minimal config compared to Webpack
+
+---
+
+## 9. Testing Strategy
+
+### Decision: Vitest (unit) + React Testing Library (component) + Playwright (E2E)
+
+**Testing Pyramid**:
+- **Unit Tests (80% coverage target)**: Zod schemas, utility functions, hooks
+- **Component Tests**: User interactions, form submissions, error states
+- **E2E Tests**: P1 user stories (create/publish page, upload asset, manage sites)
+- **Accessibility Tests**: axe-core on all components
+
+---
+
+## 10. API Integration Pattern
+
+### Decision: Centralized API Client with Type-Safe Contracts
+
+**Implementation**:
+```typescript
+// src/api/client.ts
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('auth_token')
+  
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...options?.headers,
+    },
+  })
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`)
+  }
+  
+  return response.json()
+}
+
+// src/api/pages.ts
+export const pagesApi = {
+  list: (siteId: string) => request<Page[]>(`/v1/sites/${siteId}/pages`),
+  get: (siteId: string, id: string) => request<Page>(`/v1/sites/${siteId}/pages/${id}`),
+  create: (siteId: string, data: CreatePageDto) => 
+    request<Page>(`/v1/sites/${siteId}/pages`, { 
+      method: 'POST', 
+      body: JSON.stringify(data) 
+    }),
+  update: (siteId: string, id: string, data: UpdatePageDto) =>
+    request<Page>(`/v1/sites/${siteId}/pages/${id}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data) 
+    }),
+}
+```
 
 ---
 
 ## Summary of Decisions
 
-| Decision Area | Choice | Key Rationale |
-|---------------|--------|---------------|
-| Framework | React 18 + TypeScript | Mature ecosystem, type safety, accessibility tooling |
-| State Management | TanStack Query + Local State | Optimized for API-backed state, built-in caching/retry |
-| Forms | Controlled Components + Zod | Simple, TypeScript-native validation |
-| File Upload | Client Validation + Direct POST | Meets FR-022 (validate before upload) |
-| Authentication | Integrate Existing (Bearer/Cookie) | Out of scope for spec; detect and adapt |
-| Accessibility | axe-core + Playwright + Manual | Automated + manual coverage for WCAG 2.1 AA |
-| CI/CD | GitHub Actions + Lighthouse CI | Automated testing and performance monitoring |
-| API Changes | Add publishedDate field | **Blocking** for scheduled publishing (FR-021) |
-| Concurrent Edits | updatedDate comparison | Simple, leverages existing API field |
-| Date Handling | date-fns + UTC storage | Modern library, timezone-safe |
-| Lists | Client-side filter, optional pagination | Sufficient for admin scale |
+| Area | Decision | Key Benefit |
+|------|----------|-------------|
+| Framework | React 18 + TypeScript | Type safety, ecosystem maturity |
+| State Management | TanStack Query + local state | Server state separation, optimistic updates |
+| Validation | Zod + React Hook Form | Runtime validation, type inference |
+| File Upload | Client-side pre-flight validation | Immediate feedback, bandwidth savings |
+| Concurrent Edits | Optimistic locking with timestamps | Simple, meets requirements |
+| Accessibility | axe-core + React-ARIA + manual testing | WCAG 2.1 AA compliance |
+| Performance | Code splitting + virtualization + caching | <3s page load, <2s action feedback |
+| Build Tool | Vite | Fast HMR, modern defaults |
+| Testing | Vitest + RTL + Playwright + axe-core | Comprehensive coverage |
+| API Integration | Centralized typed client | Type safety, error handling |
 
-**Critical Path Items**:
-1. **API Update**: Add `publishedDate` to Page entity (backend team dependency)
-2. **Auth Discovery**: Identify existing authentication mechanism
-3. **Asset Upload**: Confirm API endpoint accepts multipart/form-data
+---
 
-**Next Phase**: Generate data-model.md, contracts/, and quickstart.md based on these decisions.
+## Implementation Notes
+
+- **No Backend Blockers**: Existing API already has `isPublished` boolean on Page entity
+- **Simplified Scope**: No scheduled publishing (no publishedDate field), no page-asset associations
+- **Feature Independence**: Sites, Pages, and Assets are independently implementable and testable
+- **Accessibility First**: axe-core integrated into component tests from day one
