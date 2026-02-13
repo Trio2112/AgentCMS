@@ -1,13 +1,17 @@
-import { useMutation, useQueryClient } from '@tantml:parameter>
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { pagesApi } from '../api'
 import { PAGES_QUERY_KEY } from './usePages'
 import type { Page } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface DeletePageContext {
+  previousPages?: Page[]
+}
+
 export function useDeletePage() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, string>({
+  return useMutation<void, Error, string, DeletePageContext>({
     mutationFn: pagesApi.delete,
     onMutate: async (pageId) => {
       await queryClient.cancelQueries({ queryKey: PAGES_QUERY_KEY })

@@ -153,7 +153,6 @@ export const SiteList: React.FC<SiteListProps> = ({ sites, loading, onEdit, onDe
               </div>
             ))
           )}
-          ))}
         </div>
       )}
     </div>

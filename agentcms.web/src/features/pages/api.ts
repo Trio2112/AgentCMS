@@ -1,5 +1,5 @@
 import apiClient from '@api/client'
-import type { Page, CreatePageDto, UpdatePageDto } from '@types/api'
+import type { Page, CreatePageDto, UpdatePageDto } from '@/types/api'
 
 const BASE_PATH = '/v1/pages'
 

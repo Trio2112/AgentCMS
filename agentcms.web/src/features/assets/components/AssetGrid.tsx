@@ -160,8 +160,6 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
             )
             })
           )}
-            )
-          })}
         </div>
       )}
     </div>

@@ -4,10 +4,14 @@ import { ASSETS_QUERY_KEY } from './useAssets'
 import type { Asset } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface DeleteAssetContext {
+  previousAssets?: Asset[]
+}
+
 export function useDeleteAsset() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, string>({
+  return useMutation<void, Error, string, DeleteAssetContext>({
     mutationFn: assetsApi.delete,
     onMutate: async (assetId) => {
       await queryClient.cancelQueries({ queryKey: ASSETS_QUERY_KEY })

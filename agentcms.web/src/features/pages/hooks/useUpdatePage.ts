@@ -10,10 +10,14 @@ interface UpdatePageParams {
   data: UpdatePageDto
 }
 
+interface UpdatePageContext {
+  previousPages?: Page[]
+}
+
 export function useUpdatePage() {
   const queryClient = useQueryClient()
 
-  return useMutation<Page, Error, UpdatePageParams>({
+  return useMutation<Page, Error, UpdatePageParams, UpdatePageContext>({
     mutationFn: ({ id, data }) => pagesApi.update(id, data),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: PAGES_QUERY_KEY })

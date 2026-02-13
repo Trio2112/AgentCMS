@@ -1,5 +1,5 @@
 import apiClient from '@api/client'
-import type { Asset } from '@types/api'
+import type { Asset } from '@/types/api'
 
 const BASE_PATH = '/v1/assets'
 

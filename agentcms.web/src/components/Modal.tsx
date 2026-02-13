@@ -46,6 +46,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         previousFocusRef.current?.focus()
       }
     }
+    return undefined
   }, [isOpen, onClose])
 
   if (!isOpen) return null

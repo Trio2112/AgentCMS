@@ -4,10 +4,14 @@ import { SITES_QUERY_KEY } from './useSites'
 import type { Site } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface DeleteSiteContext {
+  previousSites?: Site[]
+}
+
 export function useDeleteSite() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, string>({
+  return useMutation<void, Error, string, DeleteSiteContext>({
     mutationFn: sitesApi.delete,
     onMutate: async (siteId) => {
       // Cancel outgoing refetches

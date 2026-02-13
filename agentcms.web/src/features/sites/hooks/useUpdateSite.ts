@@ -9,10 +9,14 @@ interface UpdateSiteParams {
   data: UpdateSiteDto
 }
 
+interface UpdateSiteContext {
+  previousSites?: Site[]
+}
+
 export function useUpdateSite() {
   const queryClient = useQueryClient()
 
-  return useMutation<Site, Error, UpdateSiteParams>({
+  return useMutation<Site, Error, UpdateSiteParams, UpdateSiteContext>({
     mutationFn: ({ id, data }) => sitesApi.update(id, data),
     onMutate: async ({ id, data }) => {
       // Cancel outgoing refetches

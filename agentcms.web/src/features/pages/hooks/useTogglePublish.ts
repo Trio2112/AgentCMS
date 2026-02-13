@@ -4,10 +4,14 @@ import { PAGES_QUERY_KEY } from './usePages'
 import type { Page } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface TogglePublishContext {
+  previousPages?: Page[]
+}
+
 export function useTogglePublish() {
   const queryClient = useQueryClient()
 
-  return useMutation<Page, Error, Page>({
+  return useMutation<Page, Error, Page, TogglePublishContext>({
     mutationFn: (page) => pagesApi.togglePublish(page.id, page),
     onMutate: async (page) => {
       await queryClient.cancelQueries({ queryKey: PAGES_QUERY_KEY })

@@ -1,5 +1,5 @@
 import apiClient from '@api/client'
-import type { Site, CreateSiteDto, UpdateSiteDto } from '@types/api'
+import type { Site, CreateSiteDto, UpdateSiteDto } from '@/types/api'
 
 const BASE_PATH = '/v1/sites'
 
