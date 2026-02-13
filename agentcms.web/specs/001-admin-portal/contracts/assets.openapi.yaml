@@ -1,0 +1,280 @@
+openapi: 3.0.1
+info:
+  title: AgentCMS Admin API - Assets
+  description: Asset management endpoints for the AgentCMS Admin Portal (file upload and URL-based assets)
+  version: "1.0"
+
+paths:
+  /v1/sites/{siteId}/assets:
+    get:
+      summary: List all assets for a site
+      operationId: listAssets
+      tags:
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetDto'
+        '400':
+          description: Invalid site ID
+        '500':
+          description: Server error
+    
+    post:
+      summary: Upload a new asset file
+      operationId: uploadAsset
+      tags:
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload (max 10MB, allowed types - image/*, application/pdf, text/html)
+                createdBy:
+                  type: string
+                  maxLength: 255
+                  description: Username or email of uploader
+              required:
+                - file
+      responses:
+        '201':
+          description: Asset uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDto'
+        '400':
+          description: Validation error (file too large, unsupported MIME type)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Server error
+
+  /v1/sites/{siteId}/assets/from-url:
+    post:
+      summary: Create an asset from an external URL
+      operationId: createAssetFromUrl
+      tags:
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAssetFromUrlDto'
+      responses:
+        '201':
+          description: Asset created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDto'
+        '400':
+          description: Validation error (invalid URL)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Server error
+
+  /v1/sites/{siteId}/assets/{id}:
+    get:
+      summary: Get a specific asset
+      operationId: getAsset
+      tags:
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDto'
+        '404':
+          description: Asset not found
+        '500':
+          description: Server error
+    
+    delete:
+      summary: Delete an asset
+      operationId: deleteAsset
+      tags:
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Asset deleted successfully
+        '404':
+          description: Asset not found
+        '500':
+          description: Server error
+
+  /v1/sites/{siteId}/assets/{id}/download:
+    get:
+      summary: Download an asset file
+      operationId: downloadAsset
+      tags:
+        - Assets
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Asset file download
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Asset not found
+        '500':
+          description: Server error
+
+components:
+  schemas:
+    AssetDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        siteId:
+          type: string
+          format: uuid
+          readOnly: true
+        filename:
+          type: string
+          description: Original filename or generated filename
+        mimeType:
+          type: string
+          description: Content MIME type (e.g., image/jpeg, application/pdf)
+        url:
+          type: string
+          description: Storage URL (for uploaded files) or external URL (for URL-based assets)
+        createdDate:
+          type: string
+          format: date-time
+          readOnly: true
+        createdBy:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Username or email of uploader
+      required:
+        - id
+        - siteId
+        - filename
+        - mimeType
+        - url
+        - createdDate
+    
+    CreateAssetFromUrlDto:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 500
+          description: External URL to link as an asset
+        createdBy:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Username or email of creator
+      required:
+        - url
+    
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+          description: Specific error message (e.g., "File size exceeds 10MB limit")
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: true

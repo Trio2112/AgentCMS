@@ -2,17 +2,10 @@
 # Common PowerShell functions analogous to common.sh
 
 function Get-RepoRoot {
-    try {
-        $result = git rev-parse --show-toplevel 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            return $result
-        }
-    } catch {
-        # Git command failed
-    }
-    
-    # Fall back to script location for non-git repos
-    return (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+    # Use the workspace root (where .specify/ directory exists) instead of git root
+    # This allows the workspace to be a subdirectory of a larger git repository
+    $workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+    return $workspaceRoot
 }
 
 function Get-CurrentBranch {
