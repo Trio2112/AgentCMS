@@ -34,8 +34,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen flex flex-col">
       {/* Header with Navigation */}
       <header className="bg-gradient-to-b from-blue-900 to-gray-700 text-white shadow-md">
-        <div className="flex items-center justify-between">
-          <img src={logo} alt="AgentCMS Logo" className="h-32 w-auto" />
+        <div className="flex items-center justify-between py-4">
+          <div className="flex flex-col items-center">
+            <img src={logo} alt="AgentCMS Logo" className="h-32 w-auto" />
+            <p className="text-white text-sm font-light -mt-2">Content, Powered by Agents.</p>
+          </div>
           
           {/* Navigation */}
           <nav role="navigation" aria-label="Main navigation">
