@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import logo from '../assets/images/logo.png'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -34,7 +35,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Header */}
       <header className="bg-blue-600 text-white shadow-md">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">AgentCMS Admin Portal</h1>
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="AgentCMS Logo" className="h-10 w-auto" />
+            <h1 className="text-2xl font-bold">AgentCMS Admin Portal</h1>
+          </div>
         </div>
       </header>
 
