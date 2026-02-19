@@ -4,6 +4,11 @@ import { PAGES_QUERY_KEY } from './usePages'
 import type { Page } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface TogglePublishParams {
+  siteId: string
+  page: Page
+}
+
 interface TogglePublishContext {
   previousPages?: Page[]
 }
@@ -11,9 +16,9 @@ interface TogglePublishContext {
 export function useTogglePublish() {
   const queryClient = useQueryClient()
 
-  return useMutation<Page, Error, Page, TogglePublishContext>({
-    mutationFn: (page) => pagesApi.togglePublish(page.id, page),
-    onMutate: async (page) => {
+  return useMutation<Page, Error, TogglePublishParams, TogglePublishContext>({
+    mutationFn: ({ siteId, page }) => pagesApi.togglePublish(siteId, page.id, page),
+    onMutate: async ({ page }) => {
       await queryClient.cancelQueries({ queryKey: PAGES_QUERY_KEY })
       const previousPages = queryClient.getQueryData<Page[]>(PAGES_QUERY_KEY)
 
@@ -28,7 +33,7 @@ export function useTogglePublish() {
 
       return { previousPages }
     },
-    onError: (error, _page, context) => {
+    onError: (error, _params, context) => {
       if (context?.previousPages) {
         queryClient.setQueryData(PAGES_QUERY_KEY, context.previousPages)
       }

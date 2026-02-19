@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/query/client'
 import { AxiosError } from 'axios'
 
 interface UpdatePageParams {
+  siteId: string
   id: string
   data: UpdatePageDto
 }
@@ -18,7 +19,7 @@ export function useUpdatePage() {
   const queryClient = useQueryClient()
 
   return useMutation<Page, Error, UpdatePageParams, UpdatePageContext>({
-    mutationFn: ({ id, data }) => pagesApi.update(id, data),
+    mutationFn: ({ siteId, id, data }) => pagesApi.update(siteId, id, data),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: PAGES_QUERY_KEY })
       const previousPages = queryClient.getQueryData<Page[]>(PAGES_QUERY_KEY)

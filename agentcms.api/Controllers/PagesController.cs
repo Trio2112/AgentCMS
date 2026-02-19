@@ -43,12 +43,12 @@ public class PagesController : ControllerBase
     /// <summary>
     /// Get a page by ID
     /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{pageId}")]
     [ProducesResponseType(typeof(PageDto), 200)]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> GetPage(Guid siteId, Guid id)
+    public async Task<IActionResult> GetPage(Guid siteId, Guid pageId)
     {
         // Validate siteId parameter
         if (siteId == Guid.Empty)
@@ -56,7 +56,7 @@ public class PagesController : ControllerBase
             return BadRequest(new { error = "Invalid siteId parameter" });
         }
 
-        var page = await _service.GetByIdAsync(siteId, id);
+        var page = await _service.GetByIdAsync(siteId, pageId);
         if (page == null)
         {
             return NoContent(); // Non-standard: using 204 instead of 404
@@ -85,17 +85,17 @@ public class PagesController : ControllerBase
         }
 
         var page = await _service.CreateAsync(siteId, dto);
-        return CreatedAtAction(nameof(GetPage), new { siteId = page.SiteId, id = page.Id }, page);
+        return CreatedAtAction(nameof(GetPage), new { siteId = page.SiteId, pageId = page.Id }, page);
     }
 
     /// <summary>
     /// Update an existing page
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("{pageId}")]
     [ProducesResponseType(typeof(PageDto), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> UpdatePage(Guid siteId, Guid id, [FromBody] UpdatePageDto dto)
+    public async Task<IActionResult> UpdatePage(Guid siteId, Guid pageId, [FromBody] UpdatePageDto dto)
     {
         // Validate siteId parameter
         if (siteId == Guid.Empty)
@@ -108,18 +108,18 @@ public class PagesController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var page = await _service.UpdateAsync(siteId, id, dto);
+        var page = await _service.UpdateAsync(siteId, pageId, dto);
         return Ok(page);
     }
 
     /// <summary>
     /// Delete a page
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{pageId}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> DeletePage(Guid siteId, Guid id)
+    public async Task<IActionResult> DeletePage(Guid siteId, Guid pageId)
     {
         // Validate siteId parameter
         if (siteId == Guid.Empty)
@@ -127,7 +127,7 @@ public class PagesController : ControllerBase
             return BadRequest(new { error = "Invalid siteId parameter" });
         }
 
-        await _service.DeleteAsync(siteId, id);
+        await _service.DeleteAsync(siteId, pageId);
         return NoContent();
     }
 }

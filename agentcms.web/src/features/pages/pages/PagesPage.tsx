@@ -22,7 +22,7 @@ export const PagesPage: React.FC = () => {
 
   const { showToast } = useToast()
   const { data: sites = [] } = useSites()
-  const { data: pages = [], isLoading } = usePages(selectedSiteId || undefined)
+  const { data: pages = [], isLoading } = usePages(selectedSiteId || sites[0]?.id || '')
   const createMutation = useCreatePage()
   const updateMutation = useUpdatePage()
   const deleteMutation = useDeletePage()
@@ -44,7 +44,7 @@ export const PagesPage: React.FC = () => {
 
   const handleTogglePublish = async (page: Page) => {
     try {
-      await togglePublishMutation.mutateAsync(page)
+      await togglePublishMutation.mutateAsync({ siteId: page.siteId, page })
       showToast(
         page.isPublished ? 'Page unpublished successfully' : 'Page published successfully',
         'success'
@@ -58,6 +58,7 @@ export const PagesPage: React.FC = () => {
     try {
       if (editingPage) {
         await updateMutation.mutateAsync({
+          siteId: editingPage.siteId,
           id: editingPage.id,
           data: {
             title: data.title,
@@ -70,9 +71,11 @@ export const PagesPage: React.FC = () => {
       } else {
         await createMutation.mutateAsync({
           siteId: data.siteId,
-          title: data.title,
-          body: data.body,
-          isPublished: data.isPublished,
+          data: {
+            title: data.title,
+            body: data.body,
+            isPublished: data.isPublished,
+          },
         })
         showToast('Page created successfully', 'success')
       }
@@ -91,7 +94,7 @@ export const PagesPage: React.FC = () => {
     if (!deletingPage) return
 
     try {
-      await deleteMutation.mutateAsync(deletingPage.id)
+      await deleteMutation.mutateAsync({ siteId: deletingPage.siteId, pageId: deletingPage.id })
       showToast('Page deleted successfully', 'success')
       setDeletingPage(undefined)
     } catch (error) {

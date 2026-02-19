@@ -4,9 +4,10 @@ import type { Asset } from '../types'
 
 export const ASSETS_QUERY_KEY = ['assets']
 
-export function useAssets(siteId?: string) {
+export function useAssets(siteId: string) {
   return useQuery<Asset[], Error>({
-    queryKey: siteId ? [...ASSETS_QUERY_KEY, siteId] : ASSETS_QUERY_KEY,
+    queryKey: [...ASSETS_QUERY_KEY, siteId],
     queryFn: () => assetsApi.getAll(siteId),
+    enabled: !!siteId,
   })
 }
