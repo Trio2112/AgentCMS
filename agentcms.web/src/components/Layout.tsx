@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import logo from '../assets/images/logo-cropped.png'
+import logo from '../assets/images/logo-header.png'
 
 interface LayoutProps {
   children: React.ReactNode
