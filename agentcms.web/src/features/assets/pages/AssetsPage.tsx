@@ -23,7 +23,7 @@ export const AssetsPage: React.FC = () => {
 
   const { showToast } = useToast()
   const { data: sites = [] } = useSites()
-  const { data: assets = [], isLoading } = useAssets(selectedSiteId || undefined)
+  const { data: assets = [], isLoading } = useAssets(selectedSiteId || sites[0]?.id || '')
   const { mutateAsync: uploadAsset, isPending: isUploading, uploadProgress } = useUploadAsset()
   const deleteMutation = useDeleteAsset()
 
@@ -62,7 +62,7 @@ export const AssetsPage: React.FC = () => {
     if (!deletingAsset) return
 
     try {
-      await deleteMutation.mutateAsync(deletingAsset.id)
+      await deleteMutation.mutateAsync({ siteId: deletingAsset.siteId, assetId: deletingAsset.id })
       showToast('Asset deleted successfully', 'success')
       setDeletingAsset(undefined)
     } catch (error) {
@@ -171,7 +171,7 @@ export const AssetsPage: React.FC = () => {
         title="Delete Asset"
         message={
           <>
-            Are you sure you want to delete <strong>{deletingAsset?.fileName}</strong>? This action cannot be
+            Are you sure you want to delete <strong>{deletingAsset?.filename}</strong>? This action cannot be
             undone.
           </>
         }

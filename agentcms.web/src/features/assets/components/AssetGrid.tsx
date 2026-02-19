@@ -16,6 +16,12 @@ interface AssetGridProps {
   onUpload: () => void
 }
 
+// Helper to get asset download URL from API
+const getAssetDownloadUrl = (asset: Asset): string => {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '/api'
+  return `${apiBase}/v1/sites/${asset.siteId}/assets/${asset.id}/file`
+}
+
 export const AssetGrid: React.FC<AssetGridProps> = ({
   assets,
   sites,
@@ -26,12 +32,14 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
   onPreview,
   onUpload,
 }) => {
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
 
   const filteredAssets = selectedSiteId
     ? assets.filter((asset) => asset.siteId === selectedSiteId)
     : assets
 
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes || isNaN(bytes)) return 'Unknown size'
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -103,6 +111,7 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
             filteredAssets.map((asset) => {
               const site = sites.find((s) => s.id === asset.siteId)
               const isImage = asset.mimeType.startsWith('image/')
+              const imageFailed = failedImages.has(asset.id)
 
               return (
                 <div
@@ -120,13 +129,17 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
                       onPreview(asset)
                     }
                   }}
-                  aria-label={`Preview ${asset.fileName}`}
+                  aria-label={`Preview ${asset.filename}`}
                 >
-                  {isImage && asset.thumbnailUrl ? (
+                  {isImage && !imageFailed ? (
                     <img
-                      src={asset.thumbnailUrl}
-                      alt={asset.fileName}
+                      src={getAssetDownloadUrl(asset)}
+                      alt={asset.filename}
                       className="max-h-full max-w-full object-contain"
+                      onError={() => {
+                        console.error('Failed to load image:', asset.filename, asset.id)
+                        setFailedImages(prev => new Set(prev).add(asset.id))
+                      }}
                     />
                   ) : (
                     <div className="text-6xl" aria-hidden="true">
@@ -137,13 +150,13 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
 
                 {/* Metadata */}
                 <div className="p-4">
-                  <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
-                    {asset.fileName}
+                  <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.filename}>
+                    {asset.filename}
                   </h3>
                   <div className="text-xs text-gray-500 space-y-1">
                     <p>{formatFileSize(asset.fileSize)}</p>
                     <p>{site?.name || 'Unknown site'}</p>
-                    <p>{new Date(asset.uploadDate).toLocaleDateString()}</p>
+                    <p>{new Date(asset.createdDate).toLocaleDateString()}</p>
                   </div>
 
                   {/* Actions */}

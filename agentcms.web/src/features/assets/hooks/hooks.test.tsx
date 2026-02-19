@@ -33,17 +33,17 @@ describe('useAssets', () => {
       {
         id: '1',
         siteId: 'site-1',
-        fileName: 'test.jpg',
+        filename: 'test.jpg',
         fileSize: 1024,
         mimeType: 'image/jpeg',
-        uploadDate: '2026-01-01',
-        uploadedBy: 'user1',
+        createdDate: '2026-01-01',
+        createdBy: 'user1',
         url: 'https://example.com/test.jpg',
       },
     ]
     vi.mocked(assetsApi.getAll).mockResolvedValueOnce(mockAssets)
 
-    const { result } = renderHook(() => useAssets(), { wrapper: createWrapper() })
+    const { result } = renderHook(() => useAssets('site-1'), { wrapper: createWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toEqual(mockAssets)
@@ -56,7 +56,7 @@ describe('useDeleteAsset', () => {
 
     const { result } = renderHook(() => useDeleteAsset(), { wrapper: createWrapper() })
 
-    result.current.mutate('1')
+    result.current.mutate({ siteId: 'site-1', assetId: '1' })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
   })

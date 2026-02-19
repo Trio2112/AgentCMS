@@ -4,6 +4,11 @@ import { PAGES_QUERY_KEY } from './usePages'
 import type { Page } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface DeletePageParams {
+  siteId: string
+  pageId: string
+}
+
 interface DeletePageContext {
   previousPages?: Page[]
 }
@@ -11,9 +16,9 @@ interface DeletePageContext {
 export function useDeletePage() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, string, DeletePageContext>({
-    mutationFn: pagesApi.delete,
-    onMutate: async (pageId) => {
+  return useMutation<void, Error, DeletePageParams, DeletePageContext>({
+    mutationFn: ({ siteId, pageId }) => pagesApi.delete(siteId, pageId),
+    onMutate: async ({ pageId }) => {
       await queryClient.cancelQueries({ queryKey: PAGES_QUERY_KEY })
       const previousPages = queryClient.getQueryData<Page[]>(PAGES_QUERY_KEY)
 
@@ -26,7 +31,7 @@ export function useDeletePage() {
 
       return { previousPages }
     },
-    onError: (error, _pageId, context) => {
+    onError: (error, _params, context) => {
       if (context?.previousPages) {
         queryClient.setQueryData(PAGES_QUERY_KEY, context.previousPages)
       }

@@ -4,6 +4,11 @@ import { ASSETS_QUERY_KEY } from './useAssets'
 import type { Asset } from '../types'
 import { getErrorMessage } from '@/query/client'
 
+interface DeleteAssetParams {
+  siteId: string
+  assetId: string
+}
+
 interface DeleteAssetContext {
   previousAssets?: Asset[]
 }
@@ -11,9 +16,9 @@ interface DeleteAssetContext {
 export function useDeleteAsset() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, string, DeleteAssetContext>({
-    mutationFn: assetsApi.delete,
-    onMutate: async (assetId) => {
+  return useMutation<void, Error, DeleteAssetParams, DeleteAssetContext>({
+    mutationFn: ({ siteId, assetId }) => assetsApi.delete(siteId, assetId),
+    onMutate: async ({ assetId }) => {
       await queryClient.cancelQueries({ queryKey: ASSETS_QUERY_KEY })
       const previousAssets = queryClient.getQueryData<Asset[]>(ASSETS_QUERY_KEY)
 
@@ -26,7 +31,7 @@ export function useDeleteAsset() {
 
       return { previousAssets }
     },
-    onError: (error, _assetId, context) => {
+    onError: (error, _params, context) => {
       if (context?.previousAssets) {
         queryClient.setQueryData(ASSETS_QUERY_KEY, context.previousAssets)
       }
