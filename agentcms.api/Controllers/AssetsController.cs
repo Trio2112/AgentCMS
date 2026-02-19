@@ -43,12 +43,12 @@ public class AssetsController : ControllerBase
     /// <summary>
     /// Get an asset by ID
     /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{assetId}")]
     [ProducesResponseType(typeof(AssetDto), 200)]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> GetAsset(Guid siteId, Guid id)
+    public async Task<IActionResult> GetAsset(Guid siteId, Guid assetId)
     {
         // Validate siteId parameter
         if (siteId == Guid.Empty)
@@ -56,7 +56,7 @@ public class AssetsController : ControllerBase
             return BadRequest(new { error = "Invalid siteId parameter" });
         }
 
-        var asset = await _service.GetByIdAsync(siteId, id);
+        var asset = await _service.GetByIdAsync(siteId, assetId);
         if (asset == null)
         {
             return NoContent(); // Non-standard: using 204 instead of 404
@@ -67,7 +67,7 @@ public class AssetsController : ControllerBase
     /// <summary>
     /// Upload a new asset (multipart/form-data)
     /// </summary>
-    [HttpPost("upload")]
+    [HttpPost]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(AssetDto), 201)]
     [ProducesResponseType(400)]
@@ -86,13 +86,13 @@ public class AssetsController : ControllerBase
         }
 
         var asset = await _service.UploadAsync(siteId, dto);
-        return CreatedAtAction(nameof(GetAsset), new { siteId = asset.SiteId, id = asset.Id }, asset);
+        return CreatedAtAction(nameof(GetAsset), new { siteId = asset.SiteId, assetId = asset.Id }, asset);
     }
 
     /// <summary>
     /// Create an asset from a URL
     /// </summary>
-    [HttpPost("from-url")]
+    [HttpPost("url")]
     [ProducesResponseType(typeof(AssetDto), 201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
@@ -110,18 +110,18 @@ public class AssetsController : ControllerBase
         }
 
         var asset = await _service.CreateFromUrlAsync(siteId, dto);
-        return CreatedAtAction(nameof(GetAsset), new { siteId = asset.SiteId, id = asset.Id }, asset);
+        return CreatedAtAction(nameof(GetAsset), new { siteId = asset.SiteId, assetId = asset.Id }, asset);
     }
 
     /// <summary>
     /// Download an asset file
     /// </summary>
-    [HttpGet("{id}/download")]
+    [HttpGet("{assetId}/file")]
     [ProducesResponseType(200)]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> DownloadAsset(Guid siteId, Guid id)
+    public async Task<IActionResult> DownloadAsset(Guid siteId, Guid assetId)
     {
         // Validate siteId parameter
         if (siteId == Guid.Empty)
@@ -129,18 +129,18 @@ public class AssetsController : ControllerBase
             return BadRequest(new { error = "Invalid siteId parameter" });
         }
 
-        var (stream, mimeType, filename) = await _service.DownloadAsync(siteId, id);
+        var (stream, mimeType, filename) = await _service.DownloadAsync(siteId, assetId);
         return File(stream, mimeType, filename);
     }
 
     /// <summary>
     /// Delete an asset
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{assetId}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> DeleteAsset(Guid siteId, Guid id)
+    public async Task<IActionResult> DeleteAsset(Guid siteId, Guid assetId)
     {
         // Validate siteId parameter
         if (siteId == Guid.Empty)
@@ -148,7 +148,7 @@ public class AssetsController : ControllerBase
             return BadRequest(new { error = "Invalid siteId parameter" });
         }
 
-        await _service.DeleteAsync(siteId, id);
+        await _service.DeleteAsync(siteId, assetId);
         return NoContent();
     }
 }

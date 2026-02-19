@@ -4,9 +4,10 @@ import type { Page } from '../types'
 
 export const PAGES_QUERY_KEY = ['pages']
 
-export function usePages(siteId?: string) {
+export function usePages(siteId: string) {
   return useQuery<Page[], Error>({
-    queryKey: siteId ? [...PAGES_QUERY_KEY, siteId] : PAGES_QUERY_KEY,
+    queryKey: [...PAGES_QUERY_KEY, siteId],
     queryFn: () => pagesApi.getAll(siteId),
+    enabled: !!siteId,
   })
 }

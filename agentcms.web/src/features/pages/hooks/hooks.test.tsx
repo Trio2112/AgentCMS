@@ -45,7 +45,7 @@ describe('usePages', () => {
     ]
     vi.mocked(pagesApi.getAll).mockResolvedValueOnce(mockPages)
 
-    const { result } = renderHook(() => usePages(), { wrapper: createWrapper() })
+    const { result } = renderHook(() => usePages('site-1'), { wrapper: createWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toEqual(mockPages)
@@ -72,7 +72,7 @@ describe('useTogglePublish', () => {
 
     const { result } = renderHook(() => useTogglePublish(), { wrapper: createWrapper() })
 
-    result.current.mutate(mockPage)
+    result.current.mutate({ siteId: 'site-1', page: mockPage })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toEqual(toggledPage)

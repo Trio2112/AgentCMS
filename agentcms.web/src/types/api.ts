@@ -57,12 +57,13 @@ export interface UpdatePageDto {
 export interface Asset {
   id: string
   siteId: string
-  fileName: string
-  fileSize: number
+  filename: string
   mimeType: string
-  uploadDate: string
-  uploadedBy: string
   url: string
+  createdDate: string
+  createdBy: string | null
+  // Optional properties not in spec but useful for frontend
+  fileSize?: number
   thumbnailUrl?: string
 }
 

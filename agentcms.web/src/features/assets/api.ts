@@ -1,17 +1,14 @@
 import apiClient from '@api/client'
 import type { Asset } from '@/types/api'
 
-const BASE_PATH = '/v1/assets'
-
 export const assetsApi = {
-  getAll: async (siteId?: string): Promise<Asset[]> => {
-    const params = siteId ? { siteId } : undefined
-    const response = await apiClient.get<Asset[]>(BASE_PATH, { params })
+  getAll: async (siteId: string): Promise<Asset[]> => {
+    const response = await apiClient.get<Asset[]>(`/v1/sites/${siteId}/assets`)
     return response.data
   },
 
-  getById: async (id: string): Promise<Asset> => {
-    const response = await apiClient.get<Asset>(`${BASE_PATH}/${id}`)
+  getById: async (siteId: string, id: string): Promise<Asset> => {
+    const response = await apiClient.get<Asset>(`/v1/sites/${siteId}/assets/${id}`)
     return response.data
   },
 
@@ -22,9 +19,8 @@ export const assetsApi = {
   ): Promise<Asset> => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('siteId', siteId)
 
-    const response = await apiClient.post<Asset>(BASE_PATH, formData, {
+    const response = await apiClient.post<Asset>(`/v1/sites/${siteId}/assets`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -38,7 +34,7 @@ export const assetsApi = {
     return response.data
   },
 
-  delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`${BASE_PATH}/${id}`)
+  delete: async (siteId: string, id: string): Promise<void> => {
+    await apiClient.delete(`/v1/sites/${siteId}/assets/${id}`)
   },
 }

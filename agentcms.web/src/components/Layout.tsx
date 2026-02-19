@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import logo from '../assets/images/logo-header.png'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -31,64 +32,62 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-blue-600 text-white shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">AgentCMS Admin Portal</h1>
+      {/* Header with Navigation */}
+      <header className="bg-gradient-to-b from-blue-900 to-gray-700 text-white shadow-md">
+        <div className="flex items-center justify-between">
+          <img src={logo} alt="AgentCMS Logo" className="h-32 w-auto" />
+          
+          {/* Navigation */}
+          <nav role="navigation" aria-label="Main navigation">
+            <ul className="flex space-x-2 pr-4">
+              <li>
+                <Link
+                  to="/"
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isActive('/') ? 'bg-blue-700 text-white font-medium' : 'text-white hover:bg-blue-700'
+                  }`}
+                  aria-current={isActive('/') ? 'page' : undefined}
+                >
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/sites"
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isActive('/sites') ? 'bg-blue-700 text-white font-medium' : 'text-white hover:bg-blue-700'
+                  }`}
+                  aria-current={isActive('/sites') ? 'page' : undefined}
+                >
+                  Sites
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/pages"
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isActive('/pages') ? 'bg-blue-700 text-white font-medium' : 'text-white hover:bg-blue-700'
+                  }`}
+                  aria-current={isActive('/pages') ? 'page' : undefined}
+                >
+                  Pages
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/assets"
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isActive('/assets') ? 'bg-blue-700 text-white font-medium' : 'text-white hover:bg-blue-700'
+                  }`}
+                  aria-current={isActive('/assets') ? 'page' : undefined}
+                >
+                  Assets
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
       </header>
-
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200" role="navigation" aria-label="Main navigation">
-        <div className="container mx-auto px-4">
-          <ul className="flex space-x-6 py-3">
-            <li>
-              <Link
-                to="/"
-                className={`px-3 py-2 rounded transition-colors ${
-                  isActive('/') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                aria-current={isActive('/') ? 'page' : undefined}
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/sites"
-                className={`px-3 py-2 rounded transition-colors ${
-                  isActive('/sites') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                aria-current={isActive('/sites') ? 'page' : undefined}
-              >
-                Sites
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/pages"
-                className={`px-3 py-2 rounded transition-colors ${
-                  isActive('/pages') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                aria-current={isActive('/pages') ? 'page' : undefined}
-              >
-                Pages
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/assets"
-                className={`px-3 py-2 rounded transition-colors ${
-                  isActive('/assets') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                aria-current={isActive('/assets') ? 'page' : undefined}
-              >
-                Assets
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </nav>
 
       {/* Breadcrumbs */}
       {breadcrumbs.length > 1 && (
