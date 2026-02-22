@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Configuration;
 
 namespace AgentCMS.MCP;
 
@@ -8,8 +9,10 @@ public class McpServer
     private readonly Dictionary<string, Func<JsonElement, Task<object>>> _tools;
     private bool _initialized = false;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly HttpClient _httpClient;
+    private readonly string _apiBaseUrl;
 
-    public McpServer()
+    public McpServer(IConfiguration configuration)
     {
         _tools = new Dictionary<string, Func<JsonElement, Task<object>>>();
         _jsonOptions = new JsonSerializerOptions
@@ -17,6 +20,9 @@ public class McpServer
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
+        
+        _httpClient = new HttpClient();
+        _apiBaseUrl = configuration["AgentCMS:ApiUrl"] ?? "http://localhost:5000";
         
         RegisterTools();
     }
@@ -26,6 +32,7 @@ public class McpServer
         // Register example tools
         _tools["echo"] = EchoTool;
         _tools["get_time"] = GetTimeTool;
+        _tools["get_pages_by_site_name"] = GetPagesBySiteNameTool;
     }
 
     public async Task RunAsync()
@@ -167,6 +174,24 @@ public class McpServer
                     type = "object",
                     properties = new { }
                 }
+            },
+            new
+            {
+                name = "get_pages_by_site_name",
+                description = "Gets all pages for a given site by the site's name",
+                inputSchema = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        siteName = new
+                        {
+                            type = "string",
+                            description = "The name of the site to get pages for"
+                        }
+                    },
+                    required = new[] { "siteName" }
+                }
             }
         };
 
@@ -212,6 +237,66 @@ public class McpServer
     {
         var currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         return Task.FromResult<object>(new { time = currentTime, timezone = TimeZoneInfo.Local.DisplayName });
+    }
+
+    private async Task<object> GetPagesBySiteNameTool(JsonElement arguments)
+    {
+        try
+        {
+            var siteName = arguments.GetProperty("siteName").GetString();
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new Exception("Site name is required");
+            }
+
+            // Get all sites
+            var sitesResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/v1/sites");
+            sitesResponse.EnsureSuccessStatusCode();
+            
+            var sitesJson = await sitesResponse.Content.ReadAsStringAsync();
+            var sitesArray = JsonSerializer.Deserialize<JsonElement>(sitesJson, _jsonOptions);
+
+            // Find the site with matching name (case-insensitive)
+            JsonElement? matchingSite = null;
+            foreach (var site in sitesArray.EnumerateArray())
+            {
+                var name = site.GetProperty("name").GetString();
+                if (name != null && name.Equals(siteName, StringComparison.OrdinalIgnoreCase))
+                {
+                    matchingSite = site;
+                    break;
+                }
+            }
+
+            if (!matchingSite.HasValue)
+            {
+                return new { error = $"Site with name '{siteName}' not found" };
+            }
+
+            var siteId = matchingSite.Value.GetProperty("id").GetString();
+
+            // Get pages for the site
+            var pagesResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/v1/sites/{siteId}/pages");
+            pagesResponse.EnsureSuccessStatusCode();
+            
+            var pagesJson = await pagesResponse.Content.ReadAsStringAsync();
+            var pages = JsonSerializer.Deserialize<object>(pagesJson, _jsonOptions);
+
+            return new 
+            { 
+                siteName = siteName,
+                siteId = siteId,
+                pages = pages
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new { error = $"HTTP error: {ex.Message}" };
+        }
+        catch (Exception ex)
+        {
+            return new { error = $"Error: {ex.Message}" };
+        }
     }
 }
 

@@ -10,9 +10,27 @@ This MCP server provides a JSON-RPC 2.0 interface over stdio for communication w
 
 - Full MCP protocol support (2024-11-05)
 - JSON-RPC 2.0 over stdio
+- Integration with AgentCMS API
 - Example tools:
   - `echo`: Returns the input message back
   - `get_time`: Returns current server time
+  - `get_pages_by_site_name`: Gets all pages for a site by site name
+
+## Configuration
+
+### appsettings.json
+
+The server reads its configuration from `appsettings.json`. The main configuration option is the AgentCMS API URL:
+
+```json
+{
+  "AgentCMS": {
+    "ApiUrl": "http://localhost:5000"
+  }
+}
+```
+
+Update the `ApiUrl` value to point to your AgentCMS API instance.
 
 ## Building
 
