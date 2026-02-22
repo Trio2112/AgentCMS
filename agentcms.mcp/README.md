@@ -62,7 +62,7 @@ Add to your Claude Desktop config file:
       "args": [
         "run",
         "--project",
-        "C:\\data\\git\\AgentCMS\\agentcms.mcp\\AgentCMS.MCP\\AgentCMS.MCP.csproj"
+        "C:\\data\\git\\AgentCMS\\agentcms.mcp\\AgentCMS.MCP.csproj"
       ]
     }
   }
