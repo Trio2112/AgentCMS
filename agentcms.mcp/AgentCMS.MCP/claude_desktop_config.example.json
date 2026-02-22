@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agentcms": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "C:\\data\\git\\AgentCMS\\agentcms.mcp\\AgentCMS.MCP\\AgentCMS.MCP.csproj"
+      ]
+    }
+  }
+}
