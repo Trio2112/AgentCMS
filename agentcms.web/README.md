@@ -43,7 +43,7 @@ npm install
 cp .env.example .env
 
 # Update .env with your API URL
-VITE_API_BASE_URL=http://localhost:5000
+VITE_API_BASE_URL=https://localhost:5001
 ```
 
 ### Development
@@ -183,7 +183,7 @@ agentcms.web/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:5000` |
+| `VITE_API_BASE_URL` | Backend API URL | `https://localhost:5001` |
 | `VITE_API_TIMEOUT` | API timeout (ms) | `30000` |
 | `VITE_AUTH_TOKEN_KEY` | LocalStorage key | `agentcms_auth_token` |
 | `VITE_MAX_UPLOAD_SIZE` | Max file size (bytes) | `10485760` |

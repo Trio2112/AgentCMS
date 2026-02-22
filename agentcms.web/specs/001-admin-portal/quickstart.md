@@ -10,7 +10,7 @@
 
 - **Node.js**: 20 LTS or later
 - **npm**: 10+ or **yarn**: 1.22+ or **pnpm**: 8+
-- **AgentCMS API**: Backend API running and accessible (default: `http://localhost:5000`)
+- **AgentCMS API**: Backend API running and accessible (default: `https://localhost:5001`)
 - **Modern Browser**: Chrome 90+, Firefox 88+, Safari 14+, or Edge 90+
 
 ## Local Development Setup
@@ -35,7 +35,7 @@ Create a `.env.local` file in the project root:
 
 ```bash
 # API Configuration
-VITE_API_BASE_URL=http://localhost:5000
+VITE_API_BASE_URL=https://localhost:5001
 
 # Optional: Authentication token for development
 VITE_AUTH_TOKEN=your-dev-token-here
@@ -324,7 +324,7 @@ Before considering the feature complete, verify:
 **Symptoms**: 401 Unauthorized or network errors in console
 
 **Solutions**:
-- Verify backend API is running (`http://localhost:5000/health`)
+- Verify backend API is running (`https://localhost:5001/health`)
 - Check `VITE_API_BASE_URL` in `.env.local`
 - Verify authentication token in `VITE_AUTH_TOKEN` or browser storage
 
